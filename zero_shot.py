@@ -1,6 +1,7 @@
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from prompts import TRAITS_PROMPT
 
 
 class TraitsExtractor:
@@ -10,11 +11,7 @@ class TraitsExtractor:
     def get_traits(self):
         prompt_trait_template = PromptTemplate(
             input_variables=['diagnosis'],
-            template="""
-                        Given a diagnosis of a species, create a vertical numbered list of all its traits.
-                        Diagnosis: {diagnosis}
-                        Traits: 
-                    """
+            template=TRAITS_PROMPT
         )
 
         traits_chain = LLMChain(
