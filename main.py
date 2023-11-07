@@ -10,7 +10,7 @@ load_dotenv()
 API_KEY = os.environ['OPENAI_API_KEY']
 
 if __name__ == "__main__":
-    with open("Numbered reptile descriptions.txt.txt", encoding="utf-8") as file:
+    with open("Numbered reptile descriptions.txt", encoding="utf-8") as file:
         with open('extracted_traits.csv', mode='w', newline='', encoding='utf-8') as csvfile:
             fieldnames = ['Species']
 
