@@ -15,35 +15,32 @@ if __name__ == "__main__":
             fieldnames = ['Species']
 
             for line in file:
-                diagnosis_index = line.find("Diagnosis")
+                input_line = line.split()
+                species = ' '.join(input_line[0:2])
+                diagnosis = ' '.join(input_line[2:])
 
-                if diagnosis_index != -1:
-                    species = line[:diagnosis_index].strip().replace("$", "")
-                    diagnosis = line[diagnosis_index + len("Diagnosis"):].strip()
+                if species:
+                    categorized_traits = traits.get_categorized_traits().run(f"{species}: {diagnosis}")
+                    match = re.match(r"([\w\s-]+): (.+)", categorized_traits)
 
-                    if species:
-                        categorized_traits = traits.get_categorized_traits().run(f"{species}: {diagnosis}")
-                        print(categorized_traits)
-                        match = re.match(r"([\w\s-]+): (.+)", categorized_traits)
+                    if match:
+                        species_name = species
+                        traits_info = match.group(2)
 
-                        if match:
-                            species_name = species
-                            traits_info = match.group(2)
+                        characteristics = re.findall(r"([\w\s-]+) <([\w\s-]+)>", traits_info)
 
-                            characteristics = re.findall(r"([\w\s-]+) <([\w\s-]+)>", traits_info)
+                        for characteristic, trait_category in characteristics:
+                            if trait_category not in fieldnames:
+                                fieldnames.append(trait_category)
 
-                            for characteristic, trait_category in characteristics:
-                                if trait_category not in fieldnames:
-                                    fieldnames.append(trait_category)
+                        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-                            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                        if csvfile.tell() == 0:
+                            writer.writeheader()
 
-                            if csvfile.tell() == 0:
-                                writer.writeheader()
+                        row_data = {'Species': species_name}
 
-                            row_data = {'Species': species_name}
+                        for characteristic, trait_category in characteristics:
+                            row_data[trait_category] = characteristic
 
-                            for characteristic, trait_category in characteristics:
-                                row_data[trait_category] = characteristic
-
-                            writer.writerow(row_data)
+                        writer.writerow(row_data)

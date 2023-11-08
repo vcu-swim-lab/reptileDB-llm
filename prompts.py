@@ -1,11 +1,11 @@
 EXTRACT_TRAITS_PROMPT = """
-                        Given the {diagnosis} of a species, identify the species name and extract its characteristics.
+                        Given {diagnosis}, identify the species name and extract its characteristics.
                         Format the output like this: "species name: characteristics"
                 """
 
 CATEGORIES_PROMPT = """
-                    Given the {characteristics} of a species, categorize each into trait categories. 
-
+                    Classify the {characteristics} into trait categories. 
+                    
                     Provide the ideal output in the format: (species): (characteristic) <(trait category)>, 
                     (characteristic) <(trait category)>, ...
 
