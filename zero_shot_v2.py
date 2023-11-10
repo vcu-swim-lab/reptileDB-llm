@@ -2,19 +2,19 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chains import SimpleSequentialChain
-from prompts.prompts import EXTRACT_TRAITS_PROMPT, CATEGORIES_PROMPT
+from prompts.prompts_v2 import EXTRACT_TRAITS_PROMPT_V2, CATEGORIES_PROMPT_V2
 
 
-class TraitsExtractor:
+class TraitsExtractorV2:
     def __init__(self):
-        self.llm = OpenAI(temperature=0.0, max_tokens=500)
+        self.llm = OpenAI(temperature=0.0)
         self.categorize_traits_chain = self.categorize_characteristics()
         self.extract_traits_chain = self.get_traits()
 
     def get_traits(self):
         prompt_trait_template = PromptTemplate(
             input_variables=['diagnosis'],
-            template=EXTRACT_TRAITS_PROMPT
+            template=EXTRACT_TRAITS_PROMPT_V2
         )
 
         extract_traits_chain = LLMChain(
@@ -28,7 +28,7 @@ class TraitsExtractor:
     def categorize_characteristics(self):
         prompt_categorize_template = PromptTemplate(
             input_variables=['characteristics'],
-            template=CATEGORIES_PROMPT
+            template=CATEGORIES_PROMPT_V2
         )
 
         categorize_traits_chain = LLMChain(
