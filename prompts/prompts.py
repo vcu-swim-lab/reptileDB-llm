@@ -1,10 +1,16 @@
 EXTRACT_TRAITS_PROMPT = """
-                        Given {diagnosis}, identify the species name and extract its characteristics.
+                        Given the following diagnosis: 
+                        
+                        "{diagnosis}" 
+                        
+                        Identify the species name and extract its characteristics.
                         Format the output like this: "species name: characteristics"
                 """
 
 CATEGORIES_PROMPT = """
-                    Classify the {characteristics} into trait categories. 
+                    Classify the the following species characteristics into trait categories.
+
+                    Characteristics: "{characteristics}" 
                     
                     Provide the ideal output in the format: (species): (characteristic) <(trait category)>, 
                     (characteristic) <(trait category)>, ...
@@ -20,3 +26,5 @@ CATEGORIES_PROMPT = """
                     186-197 ventrals <ventrals>, wide and constant bands encircling dark body <body bands>, 
                     interrupted and wide band on the nape <nape band>"
                     """
+
+

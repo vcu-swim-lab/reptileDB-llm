@@ -3,23 +3,19 @@ import os
 import pandas as pd
 
 EXTRACT_TRAITS_PROMPT_V2 = """
-                        Given {diagnosis}, identify the species name and extract its characteristics.
+                        Given the following diagnosis: 
+                        
+                        "{diagnosis}" 
+                        
+                        Identify the species name and extract its characteristics.
                         Format the output like this: "species name: characteristics"
-                         """
-
-script_directory = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(script_directory, '../data/Darko Table S2 Abbreviations.xlsx')
-
-trait_categories = []
-df = pd.read_excel(file_path)
-for index, row in df.iterrows():
-    value = row.iloc[2]
-    if value.lower() not in trait_categories:
-        trait_categories.append(value.lower())
+                    """
 
 CATEGORIES_PROMPT_V2 = """
-                    Classify the {characteristics} into trait categories. 
+                    Classify the the following species characteristics into trait categories.
 
+                    Characteristics: "{characteristics}" 
+                    
                     Provide the ideal output in the format: (species): (characteristic) <(trait category)>, 
                     (characteristic) <(trait category)>, ...
 
