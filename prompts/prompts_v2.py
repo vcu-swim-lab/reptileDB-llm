@@ -1,7 +1,3 @@
-import os
-
-import pandas as pd
-
 EXTRACT_TRAITS_PROMPT_V2 = """
                         Given the following diagnosis: 
                         
@@ -47,5 +43,3 @@ CATEGORIES_PROMPT_V2 = """
                     186-197 ventrals <ventrals>, wide and constant bands encircling dark body <body bands>, 
                     interrupted and wide band on the nape <nape band>"
                     """
-
-print(CATEGORIES_PROMPT_V2)
