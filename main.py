@@ -42,22 +42,22 @@ def extract_species_info(line, traits_extractor, version):
     species = genus + " " + epithet
     order = elements[2]
     family = elements[3]
-    description = ' '.join(elements[4:])
+    abstract = ' '.join(elements[4:])
 
-    categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {description}")
+    categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {abstract}")
 
     if version == 3:
         categories_split = categorized_traits.split()
         categories_list = categories_split[1:]
         categories = ' '.join(categories_list)
         print(f"{species}: {categories}")
-        return species, description, categories
+        return species, abstract, categories
 
     match = re.match(r"([\w\s-]+): (.+)", categorized_traits)
     if match:
         characteristics = re.findall(r"([\w\s-]+) <([\w\s-]+)>", match.group(2))
-        return species, description, characteristics
-    return species, description, []
+        return species, abstract, characteristics
+    return species, abstract, []
 
 
 def write_to_csv(species_data, trait_categories, filename):
