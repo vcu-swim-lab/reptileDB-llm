@@ -42,7 +42,6 @@ def process_species_data(file, traits_extractor, version):
     return species_data, trait_categories
 
 
-
 def extract_species_info(line, traits_extractor, version):
     elements = line.split()
     genus = elements[0]
