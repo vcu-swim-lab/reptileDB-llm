@@ -5,6 +5,7 @@ import pandas as pd
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
+from langdetect import detect as lang_detect
 
 from argparse import ArgumentParser
 from os import getenv
@@ -25,6 +26,9 @@ def process_species_data(file, traits_extractor, version):
         for line in file_stream:
             if not line.strip():
                 continue
+            if lang_detect(line) != 'en':
+                continue
+
             species, diagnosis, characteristics = extract_species_info(line, traits_extractor, version)
             if species and diagnosis:
                 if isinstance(characteristics, str):
@@ -33,8 +37,10 @@ def process_species_data(file, traits_extractor, version):
                 if characteristics:
                     trait_categories.update({trait for _, trait in characteristics})
 
-            species_data.append({'Species': species, char_or_cat: characteristics})
+                species_data.append({'Species': species, char_or_cat: characteristics})
+
     return species_data, trait_categories
+
 
 
 def extract_species_info(line, traits_extractor, version):
