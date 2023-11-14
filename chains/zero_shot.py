@@ -13,13 +13,14 @@ class TraitsExtractor:
 
     def get_traits(self):
         prompt_trait_template = PromptTemplate(
-            input_variables=['diagnosis'],
+            input_variables=['abstract'],
             template=EXTRACT_TRAITS_PROMPT
         )
 
         extract_traits_chain = LLMChain(
             llm=self.llm,
             prompt=prompt_trait_template,
+            output_key='characteristics',
             verbose=True
         )
 

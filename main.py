@@ -23,6 +23,8 @@ def process_species_data(file, traits_extractor, version):
 
     with file as file_stream:
         for line in file_stream:
+            if not line.strip():
+                continue
             species, diagnosis, characteristics = extract_species_info(line, traits_extractor, version)
             if species and diagnosis:
                 if isinstance(characteristics, str):

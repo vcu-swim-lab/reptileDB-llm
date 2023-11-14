@@ -1,21 +1,21 @@
 EXTRACT_TRAITS_PROMPT_V2 = """
-                        Given the following diagnosis: 
-                        
-                        "{diagnosis}" 
-                        
-                        Identify the species name and extract its characteristics.
-                        Format the output like this: "species name: characteristics"
-                    """
+                        I am working on a text span classification task for text describing reptiles. Your task is to
+                        identify reptile characteristics that define the reptiles mentioned in the abstract.
+
+                        Abstract: {abstract}
+
+                        Each characteristic must be in the abstract. Provide output in the following format: 
+                        "species name: characteristic 1; characteristic 2; characteristic 3; ..."
+
+                        Include all relevant text that describe the reptile, including quantitative and 
+                        qualitative descriptors.
+                        """
 
 CATEGORIES_PROMPT_V2 = """
-                    Classify the the following species characteristics into trait categories.
-
-                    Characteristics: "{characteristics}" 
+                    Given reptile characteristics, your task is to list the trait category each characteristic 
+                    belongs to in angled brackets. The trait category must be in the list of categories given to you.
                     
-                    Provide the ideal output in the format: (species): (characteristic) <(trait category)>, 
-                    (characteristic) <(trait category)>, ...
-
-                    Ensure that the trait category is in angled brackets <>
+                    Characteristics: "{characteristics}"
 
                     Here are the trait categories to use: <axilla-groin length>, <axilla-groin scales>, <arm width>, 
                     <anal plate>, <apical pits>, <parietal angle>, <apical scales>, <anal plate size>, <auricular 
@@ -33,13 +33,16 @@ CATEGORIES_PROMPT_V2 = """
                     <postoculars>, <precloacal scales>, <preventrals>, <rostral scale>, <supralabials>, 
                     <snout scales>, <snout-vent length>, <tail size>, <temporal scales>, <tubercle rows>, 
                     <tympanum size>, <ventral scales>, <vertebral spots>
+                    
+                    Provide output in the following format: "species name: characteristic 1 <trait category 1>, 
+                    characteristic 2 <trait category 2>, ..."
+                    
+                    Consider this example:
+                    
+                    Characteristics: "Cylindrophis ruffus: 19 midbody scale rows; 186–197 ventrals; wide and constant 
+                    bands encircling dark body; an interrupted and wide band on the nape."
 
-                    Here is an example:
-                    Characteristics: "Cylindrophis ruffus; Characteristics: 19 midbody 
-                    scale rows, 186–197 ventrals, wide and constant bands encircling dark body, an interrupted and 
-                    wide band on the nape. "
-
-                    Ideal Output: "Cylindrophis ruffus: 19 midbody scale rows <midbody scale rows>, 
+                    Output: "Cylindrophis ruffus: 19 midbody scale rows <midbody scale rows>, 
                     186-197 ventrals <ventrals>, wide and constant bands encircling dark body <body bands>, 
-                    interrupted and wide band on the nape <nape band>"
+                    interrupted and wide band on the nape <nape band>."
                     """
