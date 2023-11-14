@@ -17,27 +17,32 @@ def detect_encoding(file_path):
         return result['encoding']
 
 
+def process_line(line, traits_extractor, version):
+    if not line.strip() or lang_detect(line) != 'en':
+        return None, None
+
+    species, diagnosis, characteristics = extract_species_info(line, traits_extractor, version)
+
+    if species and diagnosis:
+        if isinstance(characteristics, str):
+            characteristics = [(characteristics, '')]
+
+        return {'Species': species, 'Characteristics' if version in [1, 2] else 'Categories': characteristics}, set(
+            trait for _, trait in characteristics)
+
+    return None, None
+
+
 def process_species_data(file, traits_extractor, version):
-    char_or_cat = 'Characteristics' if version in [1, 2] else 'Categories'
     trait_categories = set()
     species_data = []
 
     with file as file_stream:
         for line in file_stream:
-            if not line.strip():
-                continue
-            if lang_detect(line) != 'en':
-                continue
-
-            species, diagnosis, characteristics = extract_species_info(line, traits_extractor, version)
-            if species and diagnosis:
-                if isinstance(characteristics, str):
-                    characteristics = [(characteristics, '')]
-
-                if characteristics:
-                    trait_categories.update({trait for _, trait in characteristics})
-
-                species_data.append({'Species': species, char_or_cat: characteristics})
+            data, traits = process_line(line, traits_extractor, version)
+            if data:
+                trait_categories.update(traits)
+                species_data.append(data)
 
     return species_data, trait_categories
 
@@ -50,16 +55,15 @@ def extract_species_info(line, traits_extractor, version):
     order = elements[2]
     family = elements[3]
     abstract = ' '.join(elements[4:])
-
     categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {abstract}")
 
     if version == 3:
-        categories_split = categorized_traits.split()
-        categories_list = categories_split[1:]
-        categories = ' '.join(categories_list)
-        print(f"{species}: {categories}")
-        return species, abstract, categories
+        return parse_categories_v3(species, abstract, categorized_traits)
+    else:
+        return parse_characteristics_v1v2(species, abstract, categorized_traits)
 
+
+def parse_characteristics_v1v2(species, abstract, categorized_traits):
     match = re.match(r"([\w\s-]+): (.+)", categorized_traits)
     if match:
         characteristics = re.findall(r"([\w\s-]+) <([\w\s-]+)>", match.group(2))
@@ -67,9 +71,16 @@ def extract_species_info(line, traits_extractor, version):
     return species, abstract, []
 
 
-def write_to_csv(species_data, trait_categories, filename):
+def parse_categories_v3(species, abstract, categorized_traits):
+    categories_split = categorized_traits.split()
+    categories_list = categories_split[1:]
+    categories = ' '.join(categories_list)
+    return species, abstract, categories
+
+
+def write_to_csv(species_data, trait_categories, filename, version):
     fieldnames = ['Species'] + sorted(trait_categories)
-    rows = [create_csv_row(data) for data in species_data]
+    rows = [create_csv_row(data, version) for data in species_data]
 
     with open(filename, mode='w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -79,9 +90,10 @@ def write_to_csv(species_data, trait_categories, filename):
     return pd.DataFrame(rows)
 
 
-def create_csv_row(data):
+def create_csv_row(data, version):
+    char_or_cat = 'Characteristics' if version in [1, 2] else 'Categories'
     row = {'Species': data['Species']}
-    for characteristic, trait in data['Characteristics']:
+    for characteristic, trait in data[char_or_cat]:
         row[trait] = characteristic
     return row
 
@@ -103,7 +115,7 @@ def main(file_path, version):
 
     with open(file_path, 'r', encoding=file_encoding) as file:
         species_data, trait_categories = process_species_data(file, traits_extractor, version)
-        df = write_to_csv(species_data, trait_categories, output_filename)
+        df = write_to_csv(species_data, trait_categories, output_filename, version)
         df.to_csv(output_filename, index=False, encoding='utf-8')
         print(f"Output saved to {output_filename}")
 
