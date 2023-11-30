@@ -21,16 +21,31 @@ def process_line(line, traits_extractor, version):
     if not line.strip() or lang_detect(line) != 'en':
         return None, None
 
-    species, diagnosis, characteristics = extract_species_info(line, traits_extractor, version)
+    family, species_info = extract_species_info(line, traits_extractor, version)
+    species, diagnosis, characteristics = species_info
 
     if species and diagnosis:
         if isinstance(characteristics, str):
             characteristics = [(characteristics, '')]
 
-        return {'Species': species, 'Characteristics' if version in [1, 2] else 'Categories': characteristics}, set(
-            trait for _, trait in characteristics)
+        return {'Species': species, 'Family': family, 'Characteristics' if version in [1, 2] else 'Categories':
+            characteristics}, set(trait for _, trait in characteristics)
 
     return None, None
+
+
+def count_categories_for_family(species_data, family_name):
+    category_counts = {}
+    for species_dict in species_data:
+        if species_dict['Family'] == family_name:
+            categories = species_dict['Categories']
+            for category_tuple in categories:
+                category_list = category_tuple[0].split(', ')
+                for category in category_list:
+                    if category:
+                        category_counts[category] = category_counts.get(category, 0) + 1
+
+    return category_counts
 
 
 def process_species_data(file, traits_extractor, version):
@@ -41,8 +56,13 @@ def process_species_data(file, traits_extractor, version):
         for line in file_stream:
             data, traits = process_line(line, traits_extractor, version)
             if data:
-                trait_categories.update(traits)
+                trait_categories.update(trait for trait in traits if trait != 'Diagnosis')
                 species_data.append(data)
+
+    counts = count_categories_for_family(species_data, "Colubridae")
+    print(f"Category counts for 'Colubridae': {counts}")
+
+    print(species_data)
 
     return species_data, trait_categories
 
@@ -58,9 +78,9 @@ def extract_species_info(line, traits_extractor, version):
     categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {abstract}")
 
     if version == 3:
-        return parse_categories_v3(species, abstract, categorized_traits)
+        return family, parse_categories_v3(species, abstract, categorized_traits)
     else:
-        return parse_characteristics_v1v2(species, abstract, categorized_traits)
+        return family, parse_characteristics_v1v2(species, abstract, categorized_traits)
 
 
 def parse_characteristics_v1v2(species, abstract, categorized_traits):

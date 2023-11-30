@@ -35,6 +35,8 @@ CATEGORIES_PROMPT_V3 = """
                     suture; the loreal extending from the nasal to the eye; body slender,
                     cylindrical; dorsal scales in 23 rows, keeled; subcaudals single."
                     
-                    The output would be: "maxillary teeth, mandibular teeth, head, eye, nostril, 
+                    Trait categories output: "maxillary teeth, mandibular teeth, head, eye, nostril, 
                     loreal, body, dorsal scales, subcaudals"
+                    
+                    Ensure that the output is lowercase and does not include descriptors of the categories.
                     """
