@@ -2,6 +2,7 @@ import csv
 import re
 import chardet
 import pandas as pd
+import logging
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
@@ -12,12 +13,18 @@ from os import getenv
 
 
 def detect_encoding(file_path):
-    with open(file_path, 'rb') as file:
-        result = chardet.detect(file.read())
-        return result['encoding']
+    """Detect the encoding of a given file."""
+    try:
+        with open(file_path, 'rb') as file:
+            result = chardet.detect(file.read())
+            return result['encoding']
+    except Exception as e:
+        logging.error(f"Error detecting file encoding: {e}")
+        raise
 
 
 def process_line(line, traits_extractor, version):
+    """Process a single line of species data."""
     if not line.strip() or lang_detect(line) != 'en':
         return None, None
 
@@ -35,6 +42,7 @@ def process_line(line, traits_extractor, version):
 
 
 def count_categories_for_family(species_data, family_name):
+    """Count the amount of times a term appears for a given family."""
     category_counts = {}
     for species_dict in species_data:
         if species_dict['Family'] == family_name:
@@ -48,7 +56,17 @@ def count_categories_for_family(species_data, family_name):
     return category_counts
 
 
+def write_term_counts_to_csv(family_name, category_counts, filename):
+    """Write term counts to a csv file."""
+    with open(filename, mode='w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Family', 'Category', 'Count'])
+        for category, count in category_counts.items():
+            writer.writerow([family_name, category, count])
+
+
 def process_species_data(file, traits_extractor, version):
+    """Adds species data to a dictionary and set for further processing."""
     trait_categories = set()
     species_data = []
 
@@ -62,12 +80,16 @@ def process_species_data(file, traits_extractor, version):
     counts = count_categories_for_family(species_data, "Colubridae")
     print(f"Category counts for 'Colubridae': {counts}")
 
+    output_filename = 'family_categories.csv'
+    write_term_counts_to_csv("Colubridae", counts, output_filename)
+
     print(species_data)
 
     return species_data, trait_categories
 
 
 def extract_species_info(line, traits_extractor, version):
+    """Extracts specific words from species data."""
     elements = line.split()
     genus = elements[0]
     epithet = elements[1]
@@ -84,6 +106,7 @@ def extract_species_info(line, traits_extractor, version):
 
 
 def parse_characteristics_v1v2(species, abstract, categorized_traits):
+    """Extracts characteristics from species data."""
     match = re.match(r"([\w\s-]+): (.+)", categorized_traits)
     if match:
         characteristics = re.findall(r"([\w\s-]+) <([\w\s-]+)>", match.group(2))
@@ -92,6 +115,7 @@ def parse_characteristics_v1v2(species, abstract, categorized_traits):
 
 
 def parse_categories_v3(species, abstract, categorized_traits):
+    """Extracts categories from species data."""
     categories_split = categorized_traits.split()
     categories_list = categories_split[1:]
     categories = ' '.join(categories_list)
@@ -99,6 +123,7 @@ def parse_categories_v3(species, abstract, categorized_traits):
 
 
 def write_to_csv(species_data, trait_categories, filename, version):
+    """Writes species names, their categories, and their descriptions to a csv file."""
     fieldnames = ['Species'] + sorted(trait_categories)
     rows = [create_csv_row(data, version) for data in species_data]
 
@@ -111,6 +136,7 @@ def write_to_csv(species_data, trait_categories, filename, version):
 
 
 def create_csv_row(data, version):
+    """Helper method for write_to_csv that creates a csv row."""
     char_or_cat = 'Characteristics' if version in [1, 2] else 'Categories'
     row = {'Species': data['Species']}
     for characteristic, trait in data[char_or_cat]:
@@ -119,6 +145,7 @@ def create_csv_row(data, version):
 
 
 def main(file_path, version):
+    """Main function to process species data."""
     getenv("OPENAI_API_KEY")
     if version == 1:
         traits_extractor = TraitsExtractor()
