@@ -7,6 +7,7 @@ from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
 from langdetect import detect as lang_detect
+from googletrans import Translator
 
 from argparse import ArgumentParser
 from os import getenv
@@ -23,10 +24,31 @@ def detect_encoding(file_path):
         raise
 
 
+def translate(non_english):
+    translator = Translator()
+    translation = translator.translate(non_english, dest='en')
+    print(non_english)
+    print(translation.text)
+    return translation.text
+
+
 def process_line(line, traits_extractor, version):
     """Process a single line of species data."""
-    if not line.strip() or lang_detect(line) != 'en':
+    if not line.strip():
         return None, None
+
+    try:
+        language = lang_detect(line)
+    except:
+        logging.error(f"Language detection failed for line: {line}")
+        return None, None
+
+    if language != 'en':
+        try:
+            line = translate(line)
+        except Exception as e:
+            logging.error(f"Error in translation: {e}")
+            return None, None
 
     family, species_info = extract_species_info(line, traits_extractor, version)
     species, diagnosis, characteristics = species_info
@@ -77,11 +99,24 @@ def process_species_data(file, traits_extractor, version):
                 trait_categories.update(trait for trait in traits if trait != 'Diagnosis')
                 species_data.append(data)
 
-    counts = count_categories_for_family(species_data, "Colubridae")
-    print(f"Category counts for 'Colubridae': {counts}")
+    counts_amphis = count_categories_for_family(species_data, "Amphisbaenidae")
+    counts_boidae = count_categories_for_family(species_data, "Boidae")
+    counts_viper = count_categories_for_family(species_data, "Viperidae")
+    counts_python = count_categories_for_family(species_data, "Pythonidae")
 
-    output_filename = 'family_categories.csv'
-    write_term_counts_to_csv("Colubridae", counts, output_filename)
+
+
+    output_filename1 = 'family_categories_amphis.csv'
+    output_filename2 = 'family_categories_boidae.csv'
+    output_filename3 = 'family_categories_viper.csv'
+    output_filename4 = 'family_categories_python.csv'
+
+    write_term_counts_to_csv("Amphisbaenidae", counts_amphis, output_filename1)
+    write_term_counts_to_csv("Boidae", counts_boidae, output_filename2)
+    write_term_counts_to_csv("Viperidae", counts_viper, output_filename3)
+    write_term_counts_to_csv("Pythonidae", counts_python, output_filename4)
+
+
 
     print(species_data)
 
