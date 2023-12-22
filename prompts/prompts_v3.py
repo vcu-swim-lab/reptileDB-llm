@@ -1,67 +1,42 @@
-prompt = (
-    "Defn: An entity is an anatomical feature(anatomical feature), quantitative trait(quantitative trait), physical characteristic(physical characteristic), distinctive trait(distinctive trait), and color description(color). "
-    "Species, dates, times, persons, references, verbs, background information, non-specific descriptions, and background information are not entitites."
-    " "
-    "Example 1: Amphisbaena leeseri	Sauria	Amphisbaenidae	Diagnosis: A small form of Amphisbaena with the "
-    "postrostral head shields paired and without major fusions of head shields, with the midventral segments of "
-    "each an nulus as wide as long, and with a single pair of round precloacal pores (which is but faintly "
-    "apparent in females). Specimens have 216 to 240 body annuli, 14 to 16 caudal annuli, an autotomy "
-    "constriction at the fifth or sixth postcloacal annulus, 13 to 15 (normally 14) dorsal and 14 to 18 ventral "
-    "segments to a midbody annulus, and 6 pre-cloacal segments. The color of each animal is dark brown "
-    "dorsally, lighter ventrally, the color changing by a dropping out of pigmented segments. The posterior 15% "
-    "of a segment is often light colored. The intersegmental raphes are light. (Gans 1964: 554) Detailed "
-    "description: Gans 1964: 556."
-    " "
-    "Answer:"
-    "1. Amphisbaena leeseri | False | as this is a species name."
-    "2. Sauria | False | as this is an order."
-    "3. Amphisbaenidae | False | as this is the family."
-    "4. postostral head shields | True | as this is a specific anatomical feature (anatomical feature)."
-    "5. midventral segments | True | as it describes a particular segment of the body (anatomical feature)."
-    "6. single pair of round precloacal pores | True | as this is a distinct anatomical structure (anatomical feature)."
-    "7. 216 to 240 body annuli | True | as it refers to the number of body segments or rings (quantitative trait)."
-    "8. 14 to 16 caudal annuli | True | as it refers to the number of caudal annuli (quantitative trait)."
-    "9. autotomy constriction | True | as this specifies a specific survival trait and its location on the body (anatomical feature)."
-    "10. 13 to 15 dorsal segments | True | as it refers to the number of dorsal segments (quantitative trait)."
-    "11. 14 to 18 ventral segments | True | as it refers to the number of ventral segments (quantitative trait)."
-    "12. 6 pre-cloacal segments | True | as this refers to the number of pre-cloacal segments (quantitative trait)."
-    "13. dark brown dorsally | True | as it is a color (color)."
-    "14. lighter ventrally | True | as it is a color (color)."
-    "15. posterior 15% | False | as it is not a specific trait."
-    "16. light intersegmental raphes | True | as it is a color (color)."
-    " "
-    "Example 2: Amphisbaena innocens	Sauria	Amphisbaenidae	DESCRIPTION: Size large (SVL to 262 mm); tail to 18 mm, "
-    "conical, rounded terminally; no caudal autotomy; body annuli 186-219, caudal annuli 10-15; dorsal segments "
-    "14-17/midbody annulus, ventral segments 18-22/midbody annulus; 3 rows of postgenials; no postmalar chin shields; "
-    "4-6 (strongly modally 4) precloacal pores; nasal suture rather long but less than one-half length of prefrontal "
-    "suture; 1 temporal. Dorsum (as preserved) shades of brown, at times with dark violet head and tail, grading to "
-    "chocolate brown on body; color solid on head and tail, on body rectangular centers of each segment much darker "
-    "than margins, giving the impression of dark spots; color darker dorsally than ventrally but no white segments "
-    "(Schwartz & Henderson 1991: 560).For a discussion of geographic variation see Gans & Alexander 1962: 101."
-    " "
-    "Answer: "
-    "1. Amphisbaena innocens | False | as this is a species name."
-    "2. Sauria | False | as this is an order."
-    "3. Amphisbaenidae | False | as this is the family."
-    "4. Size | False | as this is a non-specific description."
-    "5. SVL to 262 mm | True | as this is quantitative trait (quantitative trait)."
-    "6. tail to 18 mm | True | as this is a quantitative trait (quantitative trait)."
-    "7. tail conical, rounded terminally | True | as this describes the shape of the tail (physical characteristic)."
-    "8. no caudal autotomy | True | as it describes the lack of a feature (distinctive trait)."
-    "9. 186-219 body annuli | True | as this describes the number of body annuli (quantitative trait)."
-    "10. 10-15 caudal annuli | True | as this is the number of caudal annuli (quantitative trait)."
-    "11. 14-17 dorsal segments/midbody annulus | True | as this is a quantitative trait (quantitative trait)."
-    "12. 18-22 ventral segments/midbody annulus | True | as this a quantitative trait (quantitative trait)."
-    "13. 3 rows of postgenials | True | as it is a distinctive trait (distinctive trait)."
-    "14. no postmalar chin shields | True | as it is a distinctive trait (distinctive trait)."
-    "15. 4-6 precoacal pores | True | as it is a quantitative trait (quantitative trait)."
-    "16. nasal suture rather long | True | as it is an anatomical feature (anatomical feature)."
-    "17. 1 temporal | True | as it is a quantitative trait (quantitative trait)."
-    "18. Dorsum shades of brown | True | as it is a color (color)."
-    "19. dark violet head and tail | True | as it is a color (color)."
-    "20. chocolate brown on body | True | as it is a color (color)."
-    "21. color solid on head and tail | True | as it is a color (color)."
-    "22. color darker dorsally than ventrally | True | as it is a color (color)."
-    "23. no white segments | True | as it describes the lack of a feature (distinctive trait)."
-    " "
-    "For this next example, only output your answer in the same format as the answers above: {abstract}")
+EXTRACT_TRAITS_PROMPT_V3 = """
+                        I am working on a text span classification task for text describing reptiles. Your task is to
+                        identify reptile characteristics that define the reptiles mentioned in the abstract.
+
+                        Abstract: {abstract}
+
+                        Each text span must be in the abstract. Provide output in the following format: 
+                        "characteristic 1; characteristic 2; characteristic 3; ..."
+
+                        Include all relevant text that describe the reptile, including quantitative and 
+                        qualitative descriptors."""
+
+CATEGORIES_PROMPT_V3 = """                    
+                    Abstract: {abstract}
+
+                    Characteristics: {characteristics}
+
+                    For each of these reptile characteristics, list the trait category it belongs to. The trait
+                    category must be in the abstract.
+
+                    Provide output in the following format: "category 1, category 2, category 3, ..."
+
+                    Consider this example:
+                    Abstract Input: "Achalinus spinalis Diagnosis (genus): (1) maxillary teeth 20–22, small,
+                    equal; (2) mandibular teeth equal; (3) head not or only scarcely distinct from
+                    neck; (4) eye small or moderate, with round or vertically subelliptical pupil;
+                    (5) nostril in the anterior part of a large concave nasal, divided by a vertical
+                    suture; (6) the loreal extending from the nasal to the eye; (7) body slender,
+                    cylindrical; (8) dorsal scales in 23 rows, keeled; (9) subcaudals single."
+
+                    Characteristics Input: "maxillary teeth 20–22, small,
+                    equal; mandibular teeth equal; head not or only scarcely distinct from
+                    neck; eye small or moderate, with round or vertically subelliptical pupil; 
+                    nostril in the anterior part of a large concave nasal, divided by a vertical
+                    suture; the loreal extending from the nasal to the eye; body slender,
+                    cylindrical; dorsal scales in 23 rows, keeled; subcaudals single."
+
+                    Trait categories output: "maxillary teeth, mandibular teeth, head, eye, nostril, 
+                    loreal, body, dorsal scales, subcaudals"
+
+                    Ensure that the output is lowercase and does not include descriptors of the categories.
+                    """

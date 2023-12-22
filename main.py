@@ -99,23 +99,6 @@ def process_species_data(file, traits_extractor, version):
                 trait_categories.update(trait for trait in traits if trait != 'Diagnosis')
                 species_data.append(data)
 
-    counts_amphis = count_categories_for_family(species_data, "Amphisbaenidae")
-    counts_boidae = count_categories_for_family(species_data, "Boidae")
-    counts_viper = count_categories_for_family(species_data, "Viperidae")
-    counts_python = count_categories_for_family(species_data, "Pythonidae")
-
-    output_filename1 = 'family_categories_amphis.csv'
-    output_filename2 = 'family_categories_boidae.csv'
-    output_filename3 = 'family_categories_viper.csv'
-    output_filename4 = 'family_categories_python.csv'
-
-    write_term_counts_to_csv("Amphisbaenidae", counts_amphis, output_filename1)
-    write_term_counts_to_csv("Boidae", counts_boidae, output_filename2)
-    write_term_counts_to_csv("Viperidae", counts_viper, output_filename3)
-    write_term_counts_to_csv("Pythonidae", counts_python, output_filename4)
-
-    print(species_data)
-
     return species_data, trait_categories
 
 
@@ -185,10 +168,6 @@ def main(file_path, version):
             traits_extractor = TraitsExtractorV2()
         elif version == 3:
             traits_extractor = TraitsExtractorV3()
-            with open(file_path, 'r') as file:
-                for line in file:
-                    print(traits_extractor.get_traits().run(line))
-            return
 
         output_filename = f'extracted_traits_v{version}.csv'
         file_encoding = detect_encoding(file_path)
@@ -199,6 +178,7 @@ def main(file_path, version):
             df.to_csv(output_filename, index=False, encoding='utf-8')
             print(f"Output saved to {output_filename}")
 
+
     if version == 4:
         traits_extractor = TraitsExtractorV4()
         with open(file_path, 'r') as file, open('output.csv', 'w', newline='', encoding='utf-8') as csv_file:
@@ -206,6 +186,7 @@ def main(file_path, version):
                 history = {'internal': [], 'visible': []}
                 output = traits_extractor.run(line, history)
                 print(f"OUTPUT: {output}")
+
     else:
         raise ValueError("Invalid version specified. Choose 1, 2, 3, or 4.")
 
