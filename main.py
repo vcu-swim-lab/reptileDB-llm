@@ -6,6 +6,7 @@ import logging
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
+from chains.llama_llm import TraitsExtractorV4
 from langdetect import detect as lang_detect
 from googletrans import Translator
 
@@ -36,7 +37,6 @@ def process_line(line, traits_extractor, version):
     """Process a single line of species data."""
     if not line.strip():
         return None, None
-
     try:
         language = lang_detect(line)
     except:
@@ -104,8 +104,6 @@ def process_species_data(file, traits_extractor, version):
     counts_viper = count_categories_for_family(species_data, "Viperidae")
     counts_python = count_categories_for_family(species_data, "Pythonidae")
 
-
-
     output_filename1 = 'family_categories_amphis.csv'
     output_filename2 = 'family_categories_boidae.csv'
     output_filename3 = 'family_categories_viper.csv'
@@ -115,8 +113,6 @@ def process_species_data(file, traits_extractor, version):
     write_term_counts_to_csv("Boidae", counts_boidae, output_filename2)
     write_term_counts_to_csv("Viperidae", counts_viper, output_filename3)
     write_term_counts_to_csv("Pythonidae", counts_python, output_filename4)
-
-
 
     print(species_data)
 
@@ -132,8 +128,8 @@ def extract_species_info(line, traits_extractor, version):
     order = elements[2]
     family = elements[3]
     abstract = ' '.join(elements[4:])
-    categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {abstract}")
 
+    categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {abstract}")
     if version == 3:
         return family, parse_categories_v3(species, abstract, categorized_traits)
     else:
@@ -182,29 +178,42 @@ def create_csv_row(data, version):
 def main(file_path, version):
     """Main function to process species data."""
     getenv("OPENAI_API_KEY")
-    if version == 1:
-        traits_extractor = TraitsExtractor()
-    elif version == 2:
-        traits_extractor = TraitsExtractorV2()
-    elif version == 3:
-        traits_extractor = TraitsExtractorV3()
+    if version in [1, 2, 3]:
+        if version == 1:
+            traits_extractor = TraitsExtractor()
+        elif version == 2:
+            traits_extractor = TraitsExtractorV2()
+        elif version == 3:
+            traits_extractor = TraitsExtractorV3()
+            with open(file_path, 'r') as file:
+                for line in file:
+                    print(traits_extractor.get_traits().run(line))
+            return
+
+        output_filename = f'extracted_traits_v{version}.csv'
+        file_encoding = detect_encoding(file_path)
+
+        with open(file_path, 'r', encoding=file_encoding) as file:
+            species_data, trait_categories = process_species_data(file, traits_extractor, version)
+            df = write_to_csv(species_data, trait_categories, output_filename, version)
+            df.to_csv(output_filename, index=False, encoding='utf-8')
+            print(f"Output saved to {output_filename}")
+
+    if version == 4:
+        traits_extractor = TraitsExtractorV4()
+        with open(file_path, 'r') as file, open('output.csv', 'w', newline='', encoding='utf-8') as csv_file:
+            for line in file:
+                history = {'internal': [], 'visible': []}
+                output = traits_extractor.run(line, history)
+                print(f"OUTPUT: {output}")
     else:
-        raise ValueError("Invalid version specified. Choose 1,2, or 3.")
-
-    output_filename = f'extracted_traits_v{version}.csv'
-
-    file_encoding = detect_encoding(file_path)
-
-    with open(file_path, 'r', encoding=file_encoding) as file:
-        species_data, trait_categories = process_species_data(file, traits_extractor, version)
-        df = write_to_csv(species_data, trait_categories, output_filename, version)
-        df.to_csv(output_filename, index=False, encoding='utf-8')
-        print(f"Output saved to {output_filename}")
+        raise ValueError("Invalid version specified. Choose 1, 2, 3, or 4.")
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Process reptile species data.")
     parser.add_argument('file', type=str, help='Path to the input file')
-    parser.add_argument('version', type=int, choices=[1, 2, 3], help='Version of the Traits Extractor (1, 2, or 3)')
+    parser.add_argument('version', type=int, choices=[1, 2, 3, 4],
+                        help='Version of the Traits Extractor (1, 2, 3, or 4)')
     args = parser.parse_args()
     main(args.file, args.version)
