@@ -1,4 +1,6 @@
 import csv
+from collections import defaultdict
+
 
 class ReptileTraits:
 
@@ -6,7 +8,7 @@ class ReptileTraits:
     def to_csv(output_text, family):
         # Making the new csv file
         with open('traits.csv', 'w', newline='') as new_file:
-            fieldnames = ['species', 'trait', 'attribute', 'family']
+            fieldnames = ['trait', 'attribute', 'family']
             csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames, delimiter='|')
 
             # Adding column headers
@@ -19,9 +21,15 @@ class ReptileTraits:
                 # Remove the white space
                 holder = [part.strip() for part in holder]
 
+                # Remove the number at the beginning of the trait
+                trait_parts = holder[0].split('. ', 1)
+                if len(trait_parts) > 1:
+                    holder[0] = trait_parts[1]
+
                 # Make sure the trait is true and then add it to the csv file
                 if holder[2] == 'True':
-                    csv_writer.writerow({'species': holder[0], 'trait': holder[1], 'attribute': holder[2], 'family': family})
+                    csv_writer.writerow(
+                        {'trait': holder[0], 'attribute': holder[1], 'family': family})
 
         # automatically updating the stats csv file after making a new csv file
         ReptileTraits.get_stats()
@@ -29,46 +37,35 @@ class ReptileTraits:
     @staticmethod
     def get_stats():
         traits_file = 'traits.csv'
-        # Creating/append new csv file for the trait counts by family
-        with open('trait_counts.csv', 'a+', newline='') as count_file:
-            fieldnames = ['family', 'trait', 'count']
-            csv_writer = csv.writer(count_file, delimiter='|')  # Use csv.writer instead of csv.DictWriter
+        count_file_path = 'trait_counts.csv'
 
-            # Put the data already on the file into a list (if file exists already)
-            existing_data = list(csv.reader(count_file, delimiter='|'))  # Specify the delimiter
+        counts_dict = defaultdict(int)
 
-            # Adding column headers if the file is empty
-            if not existing_data:
-                csv_writer.writerow(fieldnames)
+        try:
+            with open(count_file_path, 'r', newline='') as count_file:
+                csv_reader = csv.reader(count_file, delimiter='|')
+                next(csv_reader, None)
+                for row in csv_reader:
+                    if len(row) >= 4:
+                        counts_dict[(row[0], row[1], row[2])] += int(row[3])
+        except FileNotFoundError:
+            pass
 
-            # Create a dictionary to store counts for each family and trait
-            counts_dict = {(row[0], row[1]): int(row[2]) for row in existing_data[1:]}  # Skip the first row
+        with open(traits_file, 'r', newline='') as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter='|')
+            next(csv_reader, None)
+            for line in csv_reader:
+                if len(line) >= 3:
+                    counts_dict[(line[2], line[0], line[1])] += 1
 
-            # To open and read the original csv file
-            with open(traits_file, 'r') as csv_file:
-                # Reading the OG file
-                csv_reader = csv.reader(csv_file, delimiter='|')  # Specify the delimiter
-                next(csv_reader)  # Skip the header
+        with open(count_file_path, 'w', newline='') as count_file:
+            csv_writer = csv.writer(count_file, delimiter='|')
+            csv_writer.writerow(['family', 'trait', 'attribute', 'count'])
+            for (fam, trait, attr), count in counts_dict.items():
+                csv_writer.writerow([fam, trait, attr, count])
 
-                # Going through each line in the OG file
-                for line in csv_reader:
-                    # Check if the line has enough elements
-                    if len(line) >= 4:
-                        # Storing the current lines family and trait
-                        fam = line[3]
-                        trait = line[1]
 
-                        # Update the counts in the dictionary
-                        counts_dict[(fam, trait)] = counts_dict.get((fam, trait), 0) + 1
 
-            # Write the updated counts back to the CSV file
-            count_file.seek(0)  # Move the file cursor to the beginning
-            count_file.truncate()  # Clear the file content
-
-            csv_writer.writerow(fieldnames)  # Rewrite the header
-            for (fam, trait), count in counts_dict.items():
-                csv_writer.writerow([fam, trait, count])
-
-# Example usage:
-output_text = ["Amphisbaena innocens | no attribute | False | family1", "Sauria | no attribute | True | family2", "Sauria | no attribute | True | family2"]
-ReptileTraits.to_csv(output_text)
+ReptileTraits.to_csv(["10. caudal annuli | 10-15 | True | as this is the number of caudal annuli (quantitative trait).",
+                      "11. dorsal segments/midbody annulus | 14-17 | True | as this is a quantitative trait (quantitative trait).",
+                      "2. Sauria | no adjective | False | as this is an order.", "16. intersegmental raphes | light | True | as it is a color (color).", "16. intersegmental raphes | light | True | as it is a color (color)."], "Amphisbaenidae")
