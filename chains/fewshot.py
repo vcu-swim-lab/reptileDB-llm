@@ -1,7 +1,7 @@
 import html
 import json
 import requests
-from prompts.llama_prompt import prompt
+from prompts.NER_prompt import prompt
 
 
 class TraitsExtractorV4():
@@ -31,7 +31,7 @@ class TraitsExtractorV4():
             # 'turn_template': 'turn_template', # Optional
             'regenerate': False,
             '_continue': False,
-            'chat_instruct_command': 'Continue the dialogue below. Write your answer for <|prompt|>',
+            'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
             # Generation params. If 'preset' is set to different than 'None', the values
             # in presets/preset-name.yaml are used instead of the individual numbers.
