@@ -6,12 +6,14 @@ import logging
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
-from chains.llama_llm import TraitsExtractorV4
+from chains.fewshot import TraitsExtractorV4
 from langdetect import detect as lang_detect
 from googletrans import Translator
 
 from argparse import ArgumentParser
 from os import getenv
+
+from reptile_traits import ReptileTraits
 
 
 def detect_encoding(file_path):
@@ -179,13 +181,21 @@ def main(file_path, version):
             print(f"Output saved to {output_filename}")
 
 
-    if version == 4:
+    elif version == 4:
         traits_extractor = TraitsExtractorV4()
-        with open(file_path, 'r') as file, open('output.csv', 'w', newline='', encoding='utf-8') as csv_file:
+        output_text = []
+
+        with open(file_path, 'r') as file:
             for line in file:
                 history = {'internal': [], 'visible': []}
                 output = traits_extractor.run(line, history)
                 print(f"OUTPUT: {output}")
+
+                output_text.append(output)
+
+        family = "Amphisbaenidae"  # whichever family we want
+        ReptileTraits.to_csv(output_text, family)
+
 
     else:
         raise ValueError("Invalid version specified. Choose 1, 2, 3, or 4.")
