@@ -7,6 +7,7 @@ from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
 from chains.fewshot import TraitsExtractorV4
+from chains.fewshot_gpt import TraitsExtractorGPT
 from langdetect import detect as lang_detect
 from googletrans import Translator
 
@@ -180,12 +181,11 @@ def main(file_path, version):
             df.to_csv(output_filename, index=False, encoding='utf-8')
             print(f"Output saved to {output_filename}")
 
-
-    elif version == 4:
+    elif version == 4: # llama2
         traits_extractor = TraitsExtractorV4()
         output_text = []
 
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             for line in file:
                 history = {'internal': [], 'visible': []}
                 output = traits_extractor.run(line, history)
@@ -193,18 +193,30 @@ def main(file_path, version):
 
                 output_text.append(output)
 
-        family = "Amphisbaenidae"  # whichever family we want
+        family = "Amphisbaenidae"
         ReptileTraits.to_csv(output_text, family)
 
+    elif version == 5: # gpt-4
+        traits_extractor = TraitsExtractorGPT(model_name="gpt-4")
+        output_text = []
 
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                output = traits_extractor.get(diagnosis=line)
+                print(f"OUTPUT: {output}")
+
+                output_text.append(output)
+
+        family = "Amphisbaenidae"
+        ReptileTraits.to_csv(output_text, family)
     else:
-        raise ValueError("Invalid version specified. Choose 1, 2, 3, or 4.")
+        raise ValueError("Invalid version specified. Choose 1, 2, 3, 4, or 5.")
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Process reptile species data.")
     parser.add_argument('file', type=str, help='Path to the input file')
-    parser.add_argument('version', type=int, choices=[1, 2, 3, 4],
-                        help='Version of the Traits Extractor (1, 2, 3, or 4)')
+    parser.add_argument('version', type=int, choices=[1, 2, 3, 4, 5],
+                        help='Version of the Traits Extractor (1, 2, 3, 4, or 5)')
     args = parser.parse_args()
     main(args.file, args.version)
