@@ -6,7 +6,7 @@ class ReptileTraits:
 
     @staticmethod
     def to_csv(output_text, family):
-        traits_file = f'traits_{family}.csv'
+        traits_file = f'traits_{family.lower()}.csv'
         with open(traits_file, 'w', newline='') as new_file:
             fieldnames = ['trait', 'attribute', 'family']
             csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames)
@@ -17,7 +17,7 @@ class ReptileTraits:
                 lines = item.split('\n')
                 for line in lines:
                     holder = line.split('|')
-                    holder = [part.strip() for part in holder]
+                    holder = [part.strip().lower() for part in holder]
 
                     if len(holder) < 3:
                         continue
@@ -26,10 +26,10 @@ class ReptileTraits:
                     if len(trait_parts) > 1:
                         holder[0] = trait_parts[1]
 
-                    if holder[2] == 'True':
-                        csv_writer.writerow({'trait': holder[0].lower(), 'attribute': holder[1], 'family': family})
+                    if holder[2] == 'true':
+                        csv_writer.writerow({'trait': holder[0], 'attribute': holder[1], 'family': family.lower()})
 
-        ReptileTraits.get_stats(family)
+        ReptileTraits.get_stats(family.lower())
 
     @staticmethod
     def get_stats(family):
