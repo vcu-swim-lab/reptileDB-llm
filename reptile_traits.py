@@ -27,7 +27,7 @@ class ReptileTraits:
                         holder[0] = trait_parts[1]
 
                     if holder[2] == 'True':
-                        csv_writer.writerow({'trait': holder[0], 'attribute': holder[1], 'family': family})
+                        csv_writer.writerow({'trait': holder[0].lower(), 'attribute': holder[1], 'family': family})
 
         ReptileTraits.get_stats(family)
 
@@ -43,8 +43,9 @@ class ReptileTraits:
                 csv_reader = csv.reader(count_file)
                 next(csv_reader, None)
                 for row in csv_reader:
-                    if len(row) >= 4:
-                        counts_dict[(row[0], row[1], row[2])] += int(row[3])
+                    if len(row) >= 3:
+                        key = (row[0].lower(), row[1].lower())
+                        counts_dict[key] = int(row[2])
         except FileNotFoundError:
             pass
 
@@ -53,10 +54,11 @@ class ReptileTraits:
             next(csv_reader, None)
             for line in csv_reader:
                 if len(line) >= 3:
-                    counts_dict[(line[2], line[0], line[1])] += 1
+                    key = (line[2].lower(), line[0].lower())
+                    counts_dict[key] += 1
 
         with open(count_file_path, 'w', newline='') as count_file:
             csv_writer = csv.writer(count_file)
-            csv_writer.writerow(['family', 'trait', 'attribute', 'count'])
-            for (fam, trait, attr), count in counts_dict.items():
-                csv_writer.writerow([fam, trait, attr, count])
+            csv_writer.writerow(['family', 'trait', 'count'])
+            for (family, trait), count in counts_dict.items():
+                csv_writer.writerow([family, trait, count])
