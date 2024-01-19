@@ -164,50 +164,43 @@ def create_csv_row(data, version):
 def main(file_path, version):
     """Main function to process species data."""
     getenv("OPENAI_API_KEY")
-    if version in [1, 2, 3]:
-        if version == 1:
-            traits_extractor = TraitsExtractor()
-        elif version == 2:
-            traits_extractor = TraitsExtractorV2()
-        elif version == 3:
-            traits_extractor = TraitsExtractorV3()
 
-        output_filename = f'extracted_traits_v{version}.csv'
-        file_encoding = detect_encoding(file_path)
+    if version not in [1, 2, 3, 4, 5]:
+        raise ValueError("Invalid version specified. Choose 1, 2, 3, 4, or 5.")
 
-        with open(file_path, 'r', encoding=file_encoding) as file:
+    file_encoding = detect_encoding(file_path)
+
+    if version == 1:
+        traits_extractor = TraitsExtractor()
+    elif version == 2:
+        traits_extractor = TraitsExtractorV2()
+    elif version == 3:
+        traits_extractor = TraitsExtractorV3()
+    elif version == 4:
+        traits_extractor = TraitsExtractorV4()
+    elif version == 5:
+        traits_extractor = TraitsExtractorGPT(model_name="gpt-4")
+
+    with open(file_path, 'r', encoding=file_encoding) as file:
+        if version in [1, 2, 3]:
+            output_filename = f'extracted_traits_v{version}.csv'
             species_data, trait_categories = process_species_data(file, traits_extractor, version)
             df = write_to_csv(species_data, trait_categories, output_filename, version)
             df.to_csv(output_filename, index=False, encoding='utf-8')
             print(f"Output saved to {output_filename}")
 
-    elif version == 4:  # llama2
-        file_encoding = detect_encoding(file_path)
-        traits_extractor = TraitsExtractorV4()
-        output_text = []
-
-        with open(file_path, 'r', encoding=file_encoding) as file:
-            for line in file:
-                history = {'internal': [], 'visible': []}
-                output = traits_extractor.run(line, history)
-                print(f"OUTPUT: {output}")
-
-                output_text.append(output)
-
-        family = "Amphisbaenidae"
-        ReptileTraits.to_csv(output_text, family)
-
-    elif version == 5:  # gpt-4
-        file_encoding = detect_encoding(file_path)
-        traits_extractor = TraitsExtractorGPT(model_name="gpt-4")
-
-        output_text = []
-
-        with open(file_path, 'r', encoding=file_encoding) as file:
+        elif version in [4, 5]:
+            output_text = []
             line_number = 1
+
             for line in file:
                 try:
-                    output = traits_extractor.get(diagnosis=line)
+                    if version == 4:
+                        history = {'internal': [], 'visible': []}
+                        output = traits_extractor.run(line, history)
+                    else:
+                        output = traits_extractor.get(diagnosis=line)
+
                     print(f"Line #{line_number} : OUTPUT: {output}")
                     output_text.append(output)
                 except Exception as e:
@@ -215,11 +208,8 @@ def main(file_path, version):
                 finally:
                     line_number += 1
 
-        family = "Typhlopidae"
-
-        ReptileTraits.to_csv(output_text, family)
-    else:
-        raise ValueError("Invalid version specified. Choose 1, 2, 3, 4, or 5.")
+            family = "Typhlopidae"
+            ReptileTraits.to_csv(output_text, family)
 
 
 if __name__ == "__main__":
