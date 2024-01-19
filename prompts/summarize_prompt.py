@@ -1,5 +1,5 @@
 prompt_summarize = """You are tasked with analyzing a CSV dataset that contains information about various reptile 
-orders, along with their characteristics and the frequency of each characteristic's occurrence. To summarize this 
+families, along with their characteristics and the frequency of each characteristic's occurrence. To summarize this 
 data, perform the following steps:
 
 Step 1: Characteristic Ranking: Rank the characteristics based on their frequency of occurrence in descending order, 
