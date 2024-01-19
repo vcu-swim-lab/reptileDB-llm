@@ -181,11 +181,12 @@ def main(file_path, version):
             df.to_csv(output_filename, index=False, encoding='utf-8')
             print(f"Output saved to {output_filename}")
 
-    elif version == 4: # llama2
+    elif version == 4:  # llama2
+        file_encoding = detect_encoding(file_path)
         traits_extractor = TraitsExtractorV4()
         output_text = []
 
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding=file_encoding) as file:
             for line in file:
                 history = {'internal': [], 'visible': []}
                 output = traits_extractor.run(line, history)
@@ -196,18 +197,26 @@ def main(file_path, version):
         family = "Amphisbaenidae"
         ReptileTraits.to_csv(output_text, family)
 
-    elif version == 5: # gpt-4
+    elif version == 5:  # gpt-4
+        file_encoding = detect_encoding(file_path)
         traits_extractor = TraitsExtractorGPT(model_name="gpt-4")
+
         output_text = []
 
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, 'r', encoding=file_encoding) as file:
+            line_number = 1
             for line in file:
-                output = traits_extractor.get(diagnosis=line)
-                print(f"OUTPUT: {output}")
+                try:
+                    output = traits_extractor.get(diagnosis=line)
+                    print(f"Line #{line_number} : OUTPUT: {output}")
+                    output_text.append(output)
+                except Exception as e:
+                    print(f"Error processing line #{line_number}: {e}")
+                finally:
+                    line_number += 1
 
-                output_text.append(output)
+        family = "Typhlopidae"
 
-        family = "Amphisbaenidae"
         ReptileTraits.to_csv(output_text, family)
     else:
         raise ValueError("Invalid version specified. Choose 1, 2, 3, 4, or 5.")

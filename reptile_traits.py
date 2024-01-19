@@ -1,5 +1,19 @@
 import csv
+import logging
 from collections import defaultdict
+
+import chardet
+
+
+def detect_encoding(file_path):
+    """Detect the encoding of a given file."""
+    try:
+        with open(file_path, 'rb') as file:
+            result = chardet.detect(file.read())
+            return result['encoding']
+    except Exception as e:
+        logging.error(f"Error detecting file encoding: {e}")
+        raise
 
 
 class ReptileTraits:
@@ -7,7 +21,9 @@ class ReptileTraits:
     @staticmethod
     def to_csv(output_text, family):
         traits_file = f'traits_{family.lower()}.csv'
-        with open(traits_file, 'w', newline='') as new_file:
+        encoding = detect_encoding(traits_file)
+
+        with open(traits_file, 'w', newline='', encoding=encoding) as new_file:
             fieldnames = ['trait', 'attribute', 'family']
             csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames)
 
@@ -34,12 +50,13 @@ class ReptileTraits:
     @staticmethod
     def get_stats(family):
         traits_file = f'traits_{family}.csv'
-        count_file_path = f'trait_counts_{family}.csv'
-
+        count_file_path = f'trait_counts_{family.lower()}.csv'
         counts_dict = defaultdict(int)
 
+        encoding = detect_encoding(traits_file)
+
         try:
-            with open(count_file_path, 'r', newline='') as count_file:
+            with open(count_file_path, 'r', newline='', encoding=encoding) as count_file:
                 csv_reader = csv.reader(count_file)
                 next(csv_reader, None)
                 for row in csv_reader:
@@ -49,7 +66,7 @@ class ReptileTraits:
         except FileNotFoundError:
             pass
 
-        with open(traits_file, 'r', newline='') as csv_file:
+        with open(traits_file, 'r', newline='', encoding=encoding) as csv_file:
             csv_reader = csv.reader(csv_file)
             next(csv_reader, None)
             for line in csv_reader:
@@ -57,7 +74,7 @@ class ReptileTraits:
                     key = (line[2].lower(), line[0].lower())
                     counts_dict[key] += 1
 
-        with open(count_file_path, 'w', newline='') as count_file:
+        with open(count_file_path, 'w', newline='', encoding=encoding) as count_file:
             csv_writer = csv.writer(count_file)
             csv_writer.writerow(['family', 'trait', 'count'])
             for (family, trait), count in counts_dict.items():
