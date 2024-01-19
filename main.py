@@ -1,8 +1,12 @@
 import csv
 import re
+from io import StringIO
+
 import chardet
 import pandas as pd
 import logging
+
+
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
@@ -208,8 +212,16 @@ def main(file_path, version):
                 finally:
                     line_number += 1
 
-            family = "Typhlopidae"
+            family = "Viperidae"
             ReptileTraits.to_csv(output_text, family)
+
+            if version == 5:
+                df = pd.read_csv(f'trait_counts_{family.lower()}.csv')
+                output = StringIO()
+                df.to_csv(output, index=False)
+                data_string = output.getvalue()
+                response = traits_extractor.process(data_string)
+                print(f"SUMMARY: {response}")
 
 
 if __name__ == "__main__":

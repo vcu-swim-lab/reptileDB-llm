@@ -54,7 +54,7 @@ class ReptileTraits:
                     if holder[2] == 'true':
                         csv_writer.writerow({'trait': holder[0], 'attribute': holder[1], 'family': family.lower()})
 
-        ReptileTraits.get_stats(family.lower())
+        # ReptileTraits.get_stats(family.lower())
 
     @staticmethod
     def get_stats(family):
