@@ -165,8 +165,9 @@ def create_csv_row(data, version):
     return row
 
 
-def main(file_path, version):
+def main(file_path, family_name, version):
     """Main function to process species data."""
+    global traits_extractor
     getenv("OPENAI_API_KEY")
 
     if version not in [1, 2, 3, 4, 5]:
@@ -212,11 +213,10 @@ def main(file_path, version):
                 finally:
                     line_number += 1
 
-            family = "Viperidae"
-            ReptileTraits.to_csv(output_text, family)
+            ReptileTraits.to_csv(output_text, family_name)
 
             if version == 5:
-                df = pd.read_csv(f'trait_counts_{family.lower()}.csv')
+                df = pd.read_csv(f'trait_counts_{family_name.lower()}.csv')
                 output = StringIO()
                 df.to_csv(output, index=False)
                 data_string = output.getvalue()
@@ -227,7 +227,8 @@ def main(file_path, version):
 if __name__ == "__main__":
     parser = ArgumentParser(description="Process reptile species data.")
     parser.add_argument('file', type=str, help='Path to the input file')
+    parser.add_argument('family', type=str, help='Family name of the species')
     parser.add_argument('version', type=int, choices=[1, 2, 3, 4, 5],
                         help='Version of the Traits Extractor (1, 2, 3, 4, or 5)')
     args = parser.parse_args()
-    main(args.file, args.version)
+    main(args.file, args.family, args.version)
