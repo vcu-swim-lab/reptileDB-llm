@@ -1,18 +1,16 @@
 import html
-import json
 import requests
 from prompts.NER_prompt import prompt
 
 
-class TraitsExtractorV4():
+class TraitsExtractorV4:
     def __init__(self, host='localhost:5000'):
         self.host = host
-        self.uri = f'http://{host}/api/v1/chat'
+        self.uri = "http://athena511:43196/v1/chat/completions"
         self.prompt = prompt
 
-    def run(self, user_input, history):
+    def run(self, history):
         request = {
-            'user_input': f"[INST]\n{self.prompt} " + f"{user_input}\n[/INST]\n\n",
             'max_new_tokens': 800,
             'auto_max_new_tokens': False,
             'max_tokens_second': 0,
@@ -69,12 +67,8 @@ class TraitsExtractorV4():
             'stopping_strings': []
         }
 
-        response = requests.post(self.uri, json=request)
+        response = requests.post(self.uri, json=request, verify=False)
 
-        if response.status_code == 200:
-            result = response.json()['results'][0]['history']
-            #print(json.dumps(result, indent=4))
-            #print()
-            return html.unescape(result['visible'][-1][1])
-        else:
-            return None
+        asst_message = response.json()['choices'][0]['message']['content']
+        history.append({"role": "assistant", "content": asst_message})
+        return asst_message, history

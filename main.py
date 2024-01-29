@@ -19,7 +19,7 @@ from argparse import ArgumentParser
 from os import getenv
 
 from reptile_traits import ReptileTraits
-
+from prompts.NER_prompt import prompt
 
 def detect_encoding(file_path):
     """Detect the encoding of a given file."""
@@ -196,18 +196,22 @@ def main(file_path, family_name, version):
 
         elif version in [4, 5]:
             output_text = []
+            history = []
             line_number = 1
 
             for line in file:
                 try:
                     if version == 4:
-                        history = {'internal': [], 'visible': []}
-                        output = traits_extractor.run(line, history)
+                        history.append({"role": "system", "content": prompt})
+                        history.append(
+                            {"role": "user", "content": line})
+                        result, history = traits_extractor.run(history)
                     else:
-                        output = traits_extractor.get(diagnosis=line)
+                        result = traits_extractor.get(diagnosis=line)
 
-                    print(f"Line #{line_number} : OUTPUT: {output}")
-                    output_text.append(output)
+                    print(f"Line #{line_number} : OUTPUT: {result}")
+                    history.append({"role": "assistant", "content": result})
+                    output_text.append(result)
                 except Exception as e:
                     print(f"Error processing line #{line_number}: {e}")
                 finally:
@@ -215,13 +219,12 @@ def main(file_path, family_name, version):
 
             ReptileTraits.to_csv(output_text, family_name)
 
-            if version == 5:
-                df = pd.read_csv(f'trait_counts_{family_name.lower()}.csv')
-                output = StringIO()
-                df.to_csv(output, index=False)
-                data_string = output.getvalue()
-                response = traits_extractor.process(data_string)
-                print(f"SUMMARY: {response}")
+            df = pd.read_csv(f'trait_counts_{family_name.lower()}.csv')
+            output = StringIO()
+            df.to_csv(output, index=False)
+            data_string = output.getvalue()
+            response = traits_extractor.process(data_string)
+            print(f"SUMMARY: {response}")
 
 
 if __name__ == "__main__":
