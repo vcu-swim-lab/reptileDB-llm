@@ -5,7 +5,7 @@ import requests
 
 class TraitsExtractorV4:
     def __init__(self):
-        self.uri = "http://athena513:15494/v1/chat/completions"
+        self.uri = "http://athena511:54220/v1/chat/completions"
         self.headers = {"Content-Type": "application/json"}
         self.temperature = 0
         self.mode = 'instruct'
@@ -22,7 +22,7 @@ class TraitsExtractorV4:
         return response.json()['choices'][0]['message']['content']
 
     def run(self, line, prompt):
-        messages = [{"role": "system", "content": prompt + " " + line + "[/INST]"}]
+        messages = [{"role": "system", "content": prompt}, {"role": "user", "content": "[INST]" + line + "[/INST]"}]
         assistant_message = self._send_request(messages)
         messages.append({"role": "assistant", "content": assistant_message})
         return assistant_message, messages
@@ -38,5 +38,5 @@ class TraitsExtractorV4:
         return self._send_request(messages)
 
     def final_step(self, characteristics, step_two_prompt):
-        messages = [{"role": "system", "content": step_two_prompt + " " + characteristics + "[/INST]"}]
+        messages = [{"role": "system", "content": step_two_prompt}, {"role": "user", "content": "[INST]" + characteristics + "[/INST]"}]
         return self._send_request(messages)

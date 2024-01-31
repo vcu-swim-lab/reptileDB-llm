@@ -58,5 +58,5 @@ prompt = """
     25. white segments | no adjective | False | as it describes the lack of a feature.
     </s>
 
-    [INST]For this next example, follow the same format for your answer. Just output the answer.<</SYS>>
+    [INST]For this next example, follow the same format for your answer. Just output the answer.[/INST]<</SYS>>
     """
