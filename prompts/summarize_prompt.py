@@ -11,9 +11,6 @@ Step 2: Grouping Synonymous Characteristics: Group synonymous characteristics or
 versions of others from the text dataset, and update the new counts. Create a new ordered list with the updated counts.
 Output this ordered list in the same format as step 1.
 
-Step 3: Summarization: Generate a summary report that includes: your key findings, including most common trends and 
-patterns.
-
 Do not ask any questions or give any irrelevant information. Perform each step in order.
 
 Read the instructions again: You are tasked with analyzing a text dataset that contains information about various reptile 
@@ -28,8 +25,5 @@ For instance, "1. ventrals, 15". Only output the ranked list at this step.
 Step 2: Grouping Synonymous Characteristics: Group synonymous characteristics or ones that are more detailed 
 versions of others from the text dataset, and update the new counts. Create a new ordered list with the updated counts.
 Output this ordered list in the same format as step 1.
-
-Step 3: Summarization: Generate a summary report that includes: your key findings, including most common trends and 
-patterns.
 
 Do not ask any questions or give any irrelevant information. Perform each step in order."""

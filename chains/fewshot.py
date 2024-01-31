@@ -1,74 +1,42 @@
-import html
+import csv
+from io import StringIO
 import requests
-from prompts.NER_prompt import prompt
 
 
 class TraitsExtractorV4:
-    def __init__(self, host='localhost:5000'):
-        self.host = host
-        self.uri = "http://athena511:43196/v1/chat/completions"
-        self.prompt = prompt
+    def __init__(self):
+        self.uri = "http://athena513:15494/v1/chat/completions"
+        self.headers = {"Content-Type": "application/json"}
+        self.temperature = 0
+        self.mode = 'instruct'
+        self.character = 'Example'
 
-    def run(self, history):
+    def _send_request(self, messages):
         request = {
-            'max_new_tokens': 800,
-            'auto_max_new_tokens': False,
-            'max_tokens_second': 0,
-            'history': history,
-            'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
-            'character': 'Example',
-            'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
-            'your_name': 'You',
-            # 'name1': 'name of user', # Optional
-            # 'name2': 'name of character', # Optional
-            # 'context': 'character context', # Optional
-            # 'greeting': 'greeting', # Optional
-            # 'name1_instruct': 'You', # Optional
-            # 'name2_instruct': 'Assistant', # Optional
-            # 'context_instruct': 'context_instruct', # Optional
-            # 'turn_template': 'turn_template', # Optional
-            'regenerate': False,
-            '_continue': False,
-            'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
-
-            # Generation params. If 'preset' is set to different than 'None', the values
-            # in presets/preset-name.yaml are used instead of the individual numbers.
-            'preset': 'None',
-            'do_sample': True,
-            'temperature': 0,
-            'top_p': 0,
-            'typical_p': 0,
-            'epsilon_cutoff': 0,  # In units of 1e-4
-            'eta_cutoff': 0,  # In units of 1e-4
-            'tfs': 1,
-            'top_a': 0,
-            'repetition_penalty': 1.18,
-            'repetition_penalty_range': 0,
-            'top_k': 0,
-            'min_length': 0,
-            'no_repeat_ngram_size': 0,
-            'num_beams': 1,
-            'penalty_alpha': 0,
-            'length_penalty': 1,
-            'early_stopping': False,
-            'mirostat_mode': 0,
-            'mirostat_tau': 5,
-            'mirostat_eta': 0.1,
-            'grammar_string': '',
-            'guidance_scale': 1,
-            'negative_prompt': '',
-
-            'seed': -1,
-            'add_bos_token': True,
-            'truncation_length': 2048,
-            'ban_eos_token': False,
-            'custom_token_bans': '',
-            'skip_special_tokens': True,
-            'stopping_strings': []
+            'mode': self.mode,
+            'character': self.character,
+            'messages': messages,
+            'temperature': self.temperature,
         }
+        response = requests.post(self.uri, headers=self.headers, json=request, verify=False)
+        return response.json()['choices'][0]['message']['content']
 
-        response = requests.post(self.uri, json=request, verify=False)
+    def run(self, line, prompt):
+        messages = [{"role": "system", "content": prompt + " " + line + "[/INST]"}]
+        assistant_message = self._send_request(messages)
+        messages.append({"role": "assistant", "content": assistant_message})
+        return assistant_message, messages
 
-        asst_message = response.json()['choices'][0]['message']['content']
-        history.append({"role": "assistant", "content": asst_message})
-        return asst_message, history
+    def process_csv_data(self, csv_string, step_one_prompt):
+        messages = []
+        csv_data = StringIO(csv_string)
+        reader = csv.DictReader(csv_data)
+        for row in reader:
+            message_content = ', '.join([f"{key}: {value}" for key, value in row.items()])
+            print(message_content)
+            messages = [{"role": "system", "content": step_one_prompt + " " + message_content + "[/INST]"}]
+        return self._send_request(messages)
+
+    def final_step(self, characteristics, step_two_prompt):
+        messages = [{"role": "system", "content": step_two_prompt + " " + characteristics + "[/INST]"}]
+        return self._send_request(messages)

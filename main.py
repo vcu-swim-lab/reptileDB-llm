@@ -6,7 +6,7 @@ import chardet
 import pandas as pd
 import logging
 
-
+import summary_processing
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
@@ -20,6 +20,8 @@ from os import getenv
 
 from reptile_traits import ReptileTraits
 from prompts.NER_prompt import prompt
+from prompts.summarize_prompt_llama import step_one, step_two
+
 
 def detect_encoding(file_path):
     """Detect the encoding of a given file."""
@@ -196,21 +198,16 @@ def main(file_path, family_name, version):
 
         elif version in [4, 5]:
             output_text = []
-            history = []
             line_number = 1
 
             for line in file:
                 try:
                     if version == 4:
-                        history.append({"role": "system", "content": prompt})
-                        history.append(
-                            {"role": "user", "content": line})
-                        result, history = traits_extractor.run(history)
+                        result, history = traits_extractor.run(line, prompt)
                     else:
                         result = traits_extractor.get(diagnosis=line)
 
                     print(f"Line #{line_number} : OUTPUT: {result}")
-                    history.append({"role": "assistant", "content": result})
                     output_text.append(result)
                 except Exception as e:
                     print(f"Error processing line #{line_number}: {e}")
@@ -223,8 +220,11 @@ def main(file_path, family_name, version):
             output = StringIO()
             df.to_csv(output, index=False)
             data_string = output.getvalue()
-            response = traits_extractor.process(data_string)
-            print(f"SUMMARY: {response}")
+            synonymous_characteristics = traits_extractor.final_step(data_string, step_two)
+            print(f"CHARACTERISTICS: {data_string}")
+            print(f"SYN CHARACTERISTICS: {synonymous_characteristics}")
+            processor = summary_processing.SummaryProcessing(family_name, synonymous_characteristics)
+            processor.parse_traits()
 
 
 if __name__ == "__main__":
