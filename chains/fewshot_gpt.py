@@ -1,6 +1,6 @@
 import openai
 from prompts.gpt_prompt import prompt
-from prompts.summarize_prompt import prompt_summarize
+from prompts.summarize_prompt_gpt import prompt_summarize
 
 
 class TraitsExtractorGPT:

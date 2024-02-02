@@ -6,11 +6,10 @@ import chardet
 import pandas as pd
 import logging
 
-import summary_processing
 from chains.zero_shot import TraitsExtractor
 from chains.zero_shot_v2 import TraitsExtractorV2
 from chains.zero_shot_v3 import TraitsExtractorV3
-from chains.fewshot import TraitsExtractorV4
+from chains.fewshot import TraitsExtractorV4, parse_traits
 from chains.fewshot_gpt import TraitsExtractorGPT
 from langdetect import detect as lang_detect
 from googletrans import Translator
@@ -19,8 +18,8 @@ from argparse import ArgumentParser
 from os import getenv
 
 from reptile_traits import ReptileTraits
-from prompts.NER_prompt import prompt
-from prompts.summarize_prompt_llama import step_one, step_two
+from prompts.LLaMA2.NER_prompt import prompt
+from prompts.LLaMA2.summarize_prompt_llama import step_two
 
 
 def detect_encoding(file_path):
@@ -37,8 +36,6 @@ def detect_encoding(file_path):
 def translate(non_english):
     translator = Translator()
     translation = translator.translate(non_english, dest='en')
-    print(non_english)
-    print(translation.text)
     return translation.text
 
 
@@ -203,11 +200,11 @@ def main(file_path, family_name, version):
             for line in file:
                 try:
                     if version == 4:
-                        result, history = traits_extractor.run(line, prompt)
+                        result = traits_extractor.process_and_stitch(line, prompt)
                     else:
                         result = traits_extractor.get(diagnosis=line)
 
-                    print(f"Line #{line_number} : OUTPUT: {result}")
+                    print(f"Line #{line_number}\n{result}")
                     output_text.append(result)
                 except Exception as e:
                     print(f"Error processing line #{line_number}: {e}")
@@ -215,16 +212,16 @@ def main(file_path, family_name, version):
                     line_number += 1
 
             ReptileTraits.to_csv(output_text, family_name)
+            ReptileTraits.to_csv_2(output_text, family_name)
 
-            df = pd.read_csv(f'trait_counts_{family_name.lower()}.csv')
+            df = pd.read_csv(f'as_is_trait_counts_{family_name.lower()}.csv')
             output = StringIO()
             df.to_csv(output, index=False)
             data_string = output.getvalue()
             synonymous_characteristics = traits_extractor.final_step(data_string, step_two)
             print(f"CHARACTERISTICS: {data_string}")
             print(f"SYN CHARACTERISTICS: {synonymous_characteristics}")
-            processor = summary_processing.SummaryProcessing(family_name, synonymous_characteristics)
-            processor.parse_traits()
+            parse_traits(family_name, synonymous_characteristics)
 
 
 if __name__ == "__main__":

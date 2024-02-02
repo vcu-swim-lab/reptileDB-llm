@@ -1,8 +1,7 @@
 import csv
 import logging
 import os
-from collections import defaultdict
-
+import pandas as pd
 import chardet
 
 
@@ -27,9 +26,11 @@ class ReptileTraits:
         traits_file = f'traits_{family.lower()}.csv'
 
         with open(traits_file, 'w', newline='', encoding='utf-8') as new_file:
-            fieldnames = ['trait', 'attribute', 'family']
+            fieldnames = ['species', 'trait', 'attribute']
             csv_writer = csv.DictWriter(new_file, fieldnames=fieldnames)
             csv_writer.writeheader()
+
+            species_name = ""
 
             for item in output_text:
                 lines = item.split('\n')
@@ -37,49 +38,68 @@ class ReptileTraits:
                     holder = line.split('|')
                     holder = [part.strip().lower() for part in holder]
 
-                    if len(holder) < 3:
-                        continue
+                    if line.startswith('1.') and len(holder) >= 4:
+                        species_name = holder[0].split('. ', 1)[1]
 
-                    trait_parts = holder[0].split('. ', 1)
-                    if len(trait_parts) > 1:
-                        holder[0] = trait_parts[1]
-
-                    if holder[2] == 'true':
-                        csv_writer.writerow({'trait': holder[0], 'attribute': holder[1], 'family': family.lower()})
+                    elif len(holder) == 4 and holder[2].lower() == 'true':
+                        trait = holder[0]
+                        if '.' in trait:
+                            trait = trait.split('. ', 1)[-1]
+                        attribute = holder[1]
+                        csv_writer.writerow({
+                            'species': species_name,
+                            'trait': trait,
+                            'attribute': attribute,
+                        })
 
         ReptileTraits.get_stats(family.lower())
 
+    @staticmethod
+    def to_csv_2(output_text, family):
+        traits_file = f'v2traits_{family.lower()}.csv'
+
+        species_traits = {}
+
+        for item in output_text:
+            lines = item.split('\n')
+            species_name = ""
+            for line in lines:
+                holder = line.split('|')
+                holder = [part.strip().lower() for part in holder]
+
+                if line.startswith('1.') and len(holder) >= 4:
+                    species_name = holder[0].split('. ', 1)[1]
+                    species_traits[species_name] = []
+
+                elif len(holder) == 4 and holder[2].lower() == 'true':
+                    if species_name:
+                        trait = holder[0]
+                        if '.' in trait:
+                            trait = trait.split('. ', 1)[-1]
+                        attribute = holder[1]
+
+                        if species_name in species_traits:
+                            species_traits[species_name].append(f'{trait} {attribute}')
+                        else:
+                            print(f"Species name not initialized: '{species_name}'")
+                    else:
+                        print("Encountered a trait line without a preceding species name.")
+
+        with open(traits_file, 'w', newline='', encoding='utf-8') as new_file:
+            csv_writer = csv.writer(new_file)
+            csv_writer.writerow(['species', 'traits'])
+
+            for species, traits in species_traits.items():
+                row = [species] + [', '.join(traits)]
+                csv_writer.writerow(row)
 
     @staticmethod
     def get_stats(family):
         traits_file = f'traits_{family.lower()}.csv'
-        count_file_path = f'trait_counts_{family.lower()}.csv'
-        counts_dict = defaultdict(int)
+        counts_file = f'as_is_trait_counts_{family.lower()}.csv'
 
-        encoding = detect_encoding(traits_file)
+        df = pd.read_csv(traits_file)
 
-        try:
-            with open(count_file_path, 'r', newline='', encoding=encoding) as count_file:
-                csv_reader = csv.reader(count_file)
-                next(csv_reader, None)
-                for row in csv_reader:
-                    if len(row) >= 3:
-                        key = (row[0].lower(), row[1].lower())
-                        counts_dict[key] = int(row[2])
-        except FileNotFoundError:
-            pass
-
-        with open(traits_file, 'r', newline='', encoding=encoding) as csv_file:
-            csv_reader = csv.reader(csv_file)
-            next(csv_reader, None)
-            for line in csv_reader:
-                if len(line) >= 3:
-                    key = (line[2].lower(), line[0].lower())
-                    counts_dict[key] += 1
-
-        with open(count_file_path, 'w', newline='', encoding=encoding) as count_file:
-            csv_writer = csv.writer(count_file)
-            csv_writer.writerow(['family', 'trait', 'count'])
-            for (family, trait), count in counts_dict.items():
-                csv_writer.writerow([family, trait, count])
+        trait_counts = df.groupby('trait').size().reset_index(name='count')
+        trait_counts.to_csv(counts_file, index=False)
 
