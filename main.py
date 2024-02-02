@@ -6,11 +6,11 @@ import chardet
 import pandas as pd
 import logging
 
-from chains.zero_shot import TraitsExtractor
-from chains.zero_shot_v2 import TraitsExtractorV2
-from chains.zero_shot_v3 import TraitsExtractorV3
-from chains.fewshot import TraitsExtractorV4, parse_traits
-from chains.fewshot_gpt import TraitsExtractorGPT
+from chains.GPT.zero_shot import TraitsExtractor
+from chains.GPT.zero_shot_v2 import TraitsExtractorV2
+from chains.GPT.zero_shot_v3 import TraitsExtractorV3
+from chains.LLaMA2.fewshot import TraitsExtractorV4, parse_traits
+from chains.GPT.fewshot_gpt import TraitsExtractorGPT
 from langdetect import detect as lang_detect
 from googletrans import Translator
 
