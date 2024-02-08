@@ -2,7 +2,7 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.chains import SequentialChain
-from prompts.prompts_v3 import EXTRACT_TRAITS_PROMPT_V3, CATEGORIES_PROMPT_V3
+from prompts.GPT.prompts_v3 import EXTRACT_TRAITS_PROMPT_V3, CATEGORIES_PROMPT_V3
 
 
 class TraitsExtractorV3:
