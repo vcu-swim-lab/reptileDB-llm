@@ -27,23 +27,17 @@ class ReptileTraits:
         traits_file = f'traits_{family.lower()}.csv'
         data = {}
 
-        species_name = ""
-        for item in output_text:
+        for species_name, item in output_text:
             lines = item.split('\n')
             for line in lines:
                 holder = line.split('|')
                 holder = [part.strip().lower() for part in holder]
 
-                if line.startswith('1.') and len(holder) >= 4:
-                    species_name = holder[0].split('. ', 1)[1]
+                if len(holder) == 4 and holder[2].lower() == 'true':
+                    trait = holder[0].split('. ', 1)[-1]
+                    attribute = holder[1]
                     if species_name not in data:
                         data[species_name] = {}
-
-                elif len(holder) == 4 and holder[2].lower() == 'true':
-                    trait = holder[0]
-                    if '.' in trait:
-                        trait = trait.split('. ', 1)[-1]
-                    attribute = holder[1]
                     data[species_name][trait] = attribute
 
         all_traits = set()

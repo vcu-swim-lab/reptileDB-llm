@@ -198,6 +198,7 @@ def main(file_path, family_name, version):
             line_number = 1
 
             for line in file:
+                species_name = ' '.join(line.strip().split()[:2])
                 try:
                     if version == 4:
                         result = traits_extractor.process_and_stitch(line, prompt)
@@ -205,7 +206,7 @@ def main(file_path, family_name, version):
                         result = traits_extractor.get(diagnosis=line)
 
                     print(f"Line #{line_number}\n{result}")
-                    output_text.append(result)
+                    output_text.append((species_name, result))
                 except Exception as e:
                     print(f"Error processing line #{line_number}: {e}")
                 finally:

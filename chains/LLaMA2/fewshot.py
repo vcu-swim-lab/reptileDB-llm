@@ -64,7 +64,7 @@ def is_valid_format(result):
 class TraitsExtractorV4:
     def __init__(self):
         self.last_response = None
-        self.uri = "http://athena514:14118/v1/chat/completions"
+        self.uri = "http://athena511:46365/v1/chat/completions"
         self.headers = {"Content-Type": "application/json"}
         self.temperature = 0
         self.mode = 'instruct'
