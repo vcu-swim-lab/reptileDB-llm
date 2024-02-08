@@ -212,7 +212,6 @@ def main(file_path, family_name, version):
                     line_number += 1
 
             ReptileTraits.to_csv(output_text, family_name)
-            ReptileTraits.to_csv_2(output_text, family_name)
 
             df = pd.read_csv(f'as_is_trait_counts_{family_name.lower()}.csv')
             output = StringIO()

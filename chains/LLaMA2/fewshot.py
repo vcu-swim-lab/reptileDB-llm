@@ -49,13 +49,29 @@ def parse_traits(family, syn_char):
                 writer.writerow([trait, count])
 
 
+def is_valid_format(result):
+    lines = result.strip().split('\n')
+
+    pattern = re.compile(r'^\d+\.\s.*\|\s.*\|\s.*(\|\s.*)?$')
+
+    for line in lines:
+        if not pattern.match(line):
+            return False
+
+    return True
+
+
 class TraitsExtractorV4:
     def __init__(self):
-        self.uri = "http://athena511:4988/v1/chat/completions"
+        self.last_response = None
+        self.uri = "http://athena514:14118/v1/chat/completions"
         self.headers = {"Content-Type": "application/json"}
         self.temperature = 0
         self.mode = 'instruct'
         self.character = 'Example'
+        self.messages = []
+
+    def _clear_messages(self):
         self.messages = []
 
     def _send_request(self):
@@ -66,25 +82,45 @@ class TraitsExtractorV4:
             'temperature': self.temperature,
         }
         response = requests.post(self.uri, headers=self.headers, json=request, verify=False)
+        self._clear_messages()
         return response.json()['choices'][0]['message']['content']
 
     def process_and_stitch(self, text, prompt):
+        self._clear_messages()
         chunks = split_into_chunks(text)
         combined_response = ""
 
         for chunk in chunks:
-            result, _ = self.run(chunk, prompt)
+            result, _ = self.run_with_retries(chunk, prompt)
             combined_response += result + " "
 
         return combined_response.strip()
 
     def run(self, line, prompt):
+        self._clear_messages()
         self.messages.append({"role": "system", "content": prompt})
         self.messages.append({"role": "user", "content": line})
         assistant_message = self._send_request()
         return assistant_message, self.messages
 
+    def run_with_retries(self, line, prompt, max_attempts=3):
+        if max_attempts <= 0:
+            # returns the last response even if it's in the wrong format
+            return self.last_response, self.messages
+
+        self._clear_messages()
+        self.messages.append({"role": "system", "content": prompt})
+        self.messages.append({"role": "user", "content": line})
+        assistant_message = self._send_request()
+        self.last_response = assistant_message 
+
+        if is_valid_format(assistant_message):
+            return assistant_message, self.messages
+        else:
+            return self.run_with_retries(line, prompt, max_attempts - 1)
+
     def process_csv_data(self, csv_string, step_one_prompt):
+        self._clear_messages()
         csv_data = StringIO(csv_string)
         reader = csv.DictReader(csv_data)
         for row in reader:
@@ -94,4 +130,5 @@ class TraitsExtractorV4:
         return self._send_request()
 
     def final_step(self, characteristics, step_two_prompt):
+        self._clear_messages()
         return self.run(characteristics, step_two_prompt)[0]
