@@ -60,5 +60,5 @@ def test_basic(traits_extractor):
     """
     result, _ = traits_extractor.run_with_retries(diagnosis, prompt)
     out_dict = parse_output(result)
-    assert_expected(out_dict,"Amphisbaena leeseri","False")
-    assert_expected(out_dict,"Dorsal color","True")
+    assert_expected(out_dict,"Amphisbaena leeseri",False)
+    assert_expected(out_dict,"color",True)
