@@ -42,7 +42,7 @@ class TraitsExtractorV4:
         self.headers = {"Content-Type": "application/json"}
         self.temperature = 0
         self.mode = 'instruct'
-        self.character = 'Example'
+        # self.character = 'Example'
         self.messages = []
 
     def _clear_messages(self):
@@ -51,7 +51,7 @@ class TraitsExtractorV4:
     def _send_request(self):
         request = {
             'mode': self.mode,
-            'character': self.character,
+            # 'character': self.character,
             'messages': self.messages,
             'temperature': self.temperature,
         }
