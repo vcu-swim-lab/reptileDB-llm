@@ -20,7 +20,6 @@ from os import getenv
 from reptile_traits import ReptileTraits
 from prompts.LLaMA2.NER_prompt import prompt
 from prompts.LLaMA2.summarize_prompt_llama import step_two
-from debug import generate_html_content
 
 def detect_encoding(file_path):
     """Detect the encoding of a given file."""
@@ -222,8 +221,6 @@ def main(file_path, family_name, version):
             print(f"CHARACTERISTICS: {data_string}")
             print(f"SYN CHARACTERISTICS: {synonymous_characteristics}")
             parse_traits(family_name, synonymous_characteristics)
-
-            generate_html_content(family_name)
             
 
 if __name__ == "__main__":

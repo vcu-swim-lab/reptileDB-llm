@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+from argparse import ArgumentParser
 
 def color_substring(description, substring, color):
     pattern = r'(?<!\w)(?:[.,;!?]?\s?)' + re.escape(substring) + r'(?:\s?[.,;!?]?)(?!\w)'
@@ -7,12 +8,12 @@ def color_substring(description, substring, color):
     colored_description = re.sub(pattern, replacement, description, flags=re.IGNORECASE)
     return colored_description
 
-def generate_html_content(family_name):
-    df = pd.read_csv(f"traits_{family_name}.csv")
+def generate_html_content(in_file, traits_file):
+    df = pd.read_csv(traits_file)
 
     output_html_content = "<html><body>\n"
 
-    with open(f'data/{family_name}.txt', 'r', encoding='utf-8') as file:
+    with open(in_file, 'r', encoding='utf-8') as file:
         for line in file:
             modified_line = line.strip().replace(';', '|')
             missed_attributes = []
@@ -38,5 +39,13 @@ def generate_html_content(family_name):
 
     output_html_content += "</body></html>\n"
 
-    with open(f'debug_{family_name}.html', 'w', encoding='utf-8') as html_file:
+    with open(f'debug_out.html', 'w', encoding='utf-8') as html_file:
         html_file.write(output_html_content)
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description="Debugging script.")
+    parser.add_argument('file', type=str, help='Path to the input file')
+    parser.add_argument('traits_file', type=str, help='Path to the LLM output file')
+    args = parser.parse_args()
+    generate_html_content(args.file,args.traits_file)
