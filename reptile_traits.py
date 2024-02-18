@@ -21,12 +21,9 @@ def detect_encoding(file_path):
 
 
 class ReptileTraits:
-
     @staticmethod
-    def to_csv(output_text, family):
-        traits_file = f'traits_{family.lower()}.csv'
+    def parse_output_text(output_text):
         data = {}
-
         for species_name, item in output_text:
             lines = item.split('\n')
             for line in lines:
@@ -39,7 +36,11 @@ class ReptileTraits:
                     if species_name not in data:
                         data[species_name] = {}
                     data[species_name][trait] = attribute
+        return data
 
+    @staticmethod
+    def write_csv(data, family):
+        traits_file = f'traits_{family.lower()}.csv'
         all_traits = set()
         for traits in data.values():
             all_traits.update(traits.keys())
@@ -48,26 +49,25 @@ class ReptileTraits:
         with open(traits_file, 'w', newline='', encoding='utf-8') as new_file:
             csv_writer = csv.DictWriter(new_file, fieldnames=headers)
             csv_writer.writeheader()
-
             for species, traits in data.items():
                 row = {'species': species}
                 row.update(traits)
                 csv_writer.writerow(row)
 
-        ReptileTraits.get_stats(family.lower())
-
     @staticmethod
-    def get_stats(family):
+    def generate_trait_counts(family):
         traits_file = f'traits_{family.lower()}.csv'
         counts_file = f'as_is_trait_counts_{family.lower()}.csv'
-
         df = pd.read_csv(traits_file)
-
         trait_counts = {}
-
         for trait in df.columns[1:]:
             trait_counts[trait] = df[trait].notna().sum()
-
         trait_counts_df = pd.DataFrame(list(trait_counts.items()), columns=['trait', 'count'])
-
         trait_counts_df.to_csv(counts_file, index=False)
+
+    @staticmethod
+    def to_csv(output_text, family):
+        data = ReptileTraits.parse_output_text(output_text)
+        ReptileTraits.write_csv(data, family)
+        ReptileTraits.generate_trait_counts(family)
+
