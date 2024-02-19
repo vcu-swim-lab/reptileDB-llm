@@ -1,25 +1,23 @@
-import csv
-import re
+import logging
+from argparse import ArgumentParser
+from os import getenv
+import chardet
 from io import StringIO
 
-import chardet
 import pandas as pd
-import logging
+from langdetect import detect, LangDetectException
 
+from chains.GPT.species_utils import process_species_data, write_to_csv
 from chains.GPT.zero_shot import TraitsExtractor
 from chains.GPT.zero_shot_v2 import TraitsExtractorV2
 from chains.GPT.zero_shot_v3 import TraitsExtractorV3
 from chains.LLaMA2.fewshot import TraitsExtractorV4, parse_traits
 from chains.GPT.fewshot_gpt import TraitsExtractorGPT
-from langdetect import detect as lang_detect
-from googletrans import Translator
-
-from argparse import ArgumentParser
-from os import getenv
-
 from reptile_traits import ReptileTraits
-from prompts.LLaMA2.NER_prompt import prompt
+from prompts.LLaMA2.NER_prompt2 import prompt
 from prompts.LLaMA2.summarize_prompt_llama import step_two
+
+
 
 def detect_encoding(file_path):
     """Detect the encoding of a given file."""
@@ -32,135 +30,12 @@ def detect_encoding(file_path):
         raise
 
 
-def translate(non_english):
-    translator = Translator()
-    translation = translator.translate(non_english, dest='en')
-    return translation.text
-
-
-def process_line(line, traits_extractor, version):
-    """Process a single line of species data."""
-    if not line.strip():
-        return None, None
+def is_english(line):
+    """Determine if the description is English."""
     try:
-        language = lang_detect(line)
-    except:
-        logging.error(f"Language detection failed for line: {line}")
-        return None, None
-
-    if language != 'en':
-        try:
-            line = translate(line)
-        except Exception as e:
-            logging.error(f"Error in translation: {e}")
-            return None, None
-
-    family, species_info = extract_species_info(line, traits_extractor, version)
-    species, diagnosis, characteristics = species_info
-
-    if species and diagnosis:
-        if isinstance(characteristics, str):
-            characteristics = [(characteristics, '')]
-
-        return {'Species': species, 'Family': family, 'Characteristics' if version in [1, 2] else 'Categories':
-            characteristics}, set(trait for _, trait in characteristics)
-
-    return None, None
-
-
-def count_categories_for_family(species_data, family_name):
-    """Count the amount of times a term appears for a given family."""
-    category_counts = {}
-    for species_dict in species_data:
-        if species_dict['Family'] == family_name:
-            categories = species_dict['Categories']
-            for category_tuple in categories:
-                category_list = category_tuple[0].split(', ')
-                for category in category_list:
-                    if category:
-                        category_counts[category] = category_counts.get(category, 0) + 1
-
-    return category_counts
-
-
-def write_term_counts_to_csv(family_name, category_counts, filename):
-    """Write term counts to a csv file."""
-    with open(filename, mode='w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['Family', 'Category', 'Count'])
-        for category, count in category_counts.items():
-            writer.writerow([family_name, category, count])
-
-
-def process_species_data(file, traits_extractor, version):
-    """Adds species data to a dictionary and set for further processing."""
-    trait_categories = set()
-    species_data = []
-
-    with file as file_stream:
-        for line in file_stream:
-            data, traits = process_line(line, traits_extractor, version)
-            if data:
-                trait_categories.update(trait for trait in traits if trait != 'Diagnosis')
-                species_data.append(data)
-
-    return species_data, trait_categories
-
-
-def extract_species_info(line, traits_extractor, version):
-    """Extracts specific words from species data."""
-    elements = line.split()
-    genus = elements[0]
-    epithet = elements[1]
-    species = genus + " " + epithet
-    order = elements[2]
-    family = elements[3]
-    abstract = ' '.join(elements[4:])
-
-    categorized_traits = traits_extractor.get_categorized_traits().run(f"{species}: {abstract}")
-    if version == 3:
-        return family, parse_categories_v3(species, abstract, categorized_traits)
-    else:
-        return family, parse_characteristics_v1v2(species, abstract, categorized_traits)
-
-
-def parse_characteristics_v1v2(species, abstract, categorized_traits):
-    """Extracts characteristics from species data."""
-    match = re.match(r"([\w\s-]+): (.+)", categorized_traits)
-    if match:
-        characteristics = re.findall(r"([\w\s-]+) <([\w\s-]+)>", match.group(2))
-        return species, abstract, characteristics
-    return species, abstract, []
-
-
-def parse_categories_v3(species, abstract, categorized_traits):
-    """Extracts categories from species data."""
-    categories_split = categorized_traits.split()
-    categories_list = categories_split[1:]
-    categories = ' '.join(categories_list)
-    return species, abstract, categories
-
-
-def write_to_csv(species_data, trait_categories, filename, version):
-    """Writes species names, their categories, and their descriptions to a csv file."""
-    fieldnames = ['Species'] + sorted(trait_categories)
-    rows = [create_csv_row(data, version) for data in species_data]
-
-    with open(filename, mode='w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
-    return pd.DataFrame(rows)
-
-
-def create_csv_row(data, version):
-    """Helper method for write_to_csv that creates a csv row."""
-    char_or_cat = 'Characteristics' if version in [1, 2] else 'Categories'
-    row = {'Species': data['Species']}
-    for characteristic, trait in data[char_or_cat]:
-        row[trait] = characteristic
-    return row
+        return detect(line.strip()) == 'en'
+    except LangDetectException:
+        return False
 
 
 def main(file_path, family_name, version):
@@ -197,6 +72,11 @@ def main(file_path, family_name, version):
             line_number = 1
 
             for line in file:
+                if not is_english(line):
+                    print(f"Skipping non-English line #{line_number}")
+                    line_number += 1
+                    continue
+
                 species_name = ' '.join(line.strip().split()[:2])
                 try:
                     if version == 4:
