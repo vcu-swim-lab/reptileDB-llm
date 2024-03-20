@@ -48,4 +48,20 @@ Answer:
 17. Light-colored segment percentage | posterior 15% of a segment often light colored | True | physical.
 18. Intersegmental raphes | light | True | physical.
 19. Gans 1964 | Not Applicable | False | reference.
+
+Kinixys nogueyi	Description: “K. b. nogueyi (Lataste, 1886) occurs in West Africa from Senegal eastward to Cameroon 
+and the Central African Republic. This subspecies has only four claws on each forefoot, the pectoral midseam 28-39% 
+of the length of the combined gular and humeral midseams and 22-36% of the abdominal midseam, and a domed carapace (
+length/height ratio < 2.3) which is uniformly brown or with yellow areolae bordered with dark pigment.” (Ernst & 
+Barbour 1989: 230)
+
+Answer:
+1. Kinixys nogueyi | Not Applicable | False | species.
+2. K. b. nogueyi | Not Applicable | False | subspecies.
+3. Lataste, 1886 | Not Applicable | False | reference.
+4. West Africa from Senegal | eastward to Cameroon and the Central African Republic | False | general background information.
+5. forefoot | four claws | True | quantitative.
+6. pectoral midseam | of the length of the combined gular and humeral midseams and 22-36% of the abdominal midseam | True | quantitative.
+7. carapace | domed (length/height ratio < 2.3) which is uniformly brown or with yellow areolae bordered with dark pigment | True | descriptive.
+8. Ernst & Barbour 1989: 230 | Not Applicable | False | reference.
 """
