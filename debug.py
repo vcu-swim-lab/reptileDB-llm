@@ -3,7 +3,7 @@ import pandas as pd
 from argparse import ArgumentParser
 
 def color_substring(description, substring, color):
-    pattern = re.compile(r'(?<!\w)(?:\s?[.,;!?]?)' + re.escape(substring) + r'(?:\s?[.,;!?]?)(?<!\w)', re.IGNORECASE) ##Might be the problem
+    pattern = re.compile(r'(?<!\w)(?:\s?[.,;!?]?)' + re.escape(substring) + r'(?:\s?[.,;!?]?)(?<!\w)', re.IGNORECASE)
     replacement = f' <span style="color: {color};">{substring}</span> '
     colored_description = re.sub(pattern, replacement, description)
     return colored_description
