@@ -1,15 +1,18 @@
 import logging
 from argparse import ArgumentParser
+from io import StringIO
 from os import getenv
 import chardet
+import pandas as pd
 
 from chains.GPT.species_utils import process_species_data, write_to_csv
 from chains.GPT.zero_shot import TraitsExtractor
 from chains.GPT.zero_shot_v2 import TraitsExtractorV2
 from chains.GPT.zero_shot_v3 import TraitsExtractorV3
-from chains.LLaMA2.fewshot import TraitsExtractorV4
+from chains.LLaMA2.fewshot import TraitsExtractorV4, parse_traits
 from chains.GPT.fewshot_gpt import TraitsExtractorGPT
 from prompts.LLaMA2.NER_prompt2 import prompt
+from prompts.LLaMA2.summarize_prompt_llama import step_two
 from translate import is_english, translate_to_english
 
 
@@ -79,6 +82,15 @@ def main(file_path, family_name, version):
                         print(f"Error processing line #{line_number}: {e}")
                     finally:
                         line_number += 1
+
+        df = pd.read_csv(f'as_is_trait_counts_{family_name.lower()}.csv')
+        output = StringIO()
+        df.to_csv(output, index=False)
+        data_string = output.getvalue()
+        synonymous_characteristics = traits_extractor.final_step(data_string, step_two)
+        print(f"CHARACTERISTICS: {data_string}")
+        print(f"SYN CHARACTERISTICS: {synonymous_characteristics}")
+        parse_traits(family_name, synonymous_characteristics)
 
 
 if __name__ == "__main__":
