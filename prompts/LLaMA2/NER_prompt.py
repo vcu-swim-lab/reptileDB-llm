@@ -1,3 +1,5 @@
+"""Currently not in use"""
+
 prompt = """
 An entity is defined as an anatomical feature, a quantitative trait, a physical characteristic, or any descriptive term. Species, family, order, dates, times, persons, references, lack of features, verbs, and background information are not entities.
 

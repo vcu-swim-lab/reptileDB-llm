@@ -1,3 +1,5 @@
+"""Our current prompt for Llama2 turtle descriptions"""
+
 prompt = """
 An entity is an anatomical feature of an organism (anatomical), a measurable quantitative trait (quantitative), a physical characteristic that describes appearance (physical). Species, subspecies, family, order, dates, times, persons, references, verbs, and general background information are not entities.
 

@@ -3,6 +3,7 @@ from io import StringIO
 
 import requests
 import re
+from validator import is_valid
 
 
 def parse_traits(family, syn_char):
@@ -23,22 +24,10 @@ def parse_traits(family, syn_char):
                 writer.writerow([trait, count])
 
 
-def is_valid_format(result):
-    lines = result.strip().split('\n')
-
-    pattern = re.compile(r'^\d+\.\s.*\|\s.*\|\s.*(\|\s.*)?$')
-
-    for line in lines:
-        if not pattern.match(line):
-            return False
-
-    return True
-
-
 class TraitsExtractorV4:
     def __init__(self):
         self.last_response = None
-        self.uri = "http://athena521:25261/v1/chat/completions"
+        self.uri = "http://athena521:62803/v1/chat/completions"
         self.headers = {"Content-Type": "application/json"}
         self.temperature = 0
         self.mode = 'instruct'
@@ -59,7 +48,6 @@ class TraitsExtractorV4:
         self._clear_messages()
         return response.json()['choices'][0]['message']['content']
 
-
     def run(self, line, prompt):
         self._clear_messages()
         self.messages.append({"role": "system", "content": prompt})
@@ -76,11 +64,14 @@ class TraitsExtractorV4:
         self.messages.append({"role": "system", "content": prompt})
         self.messages.append({"role": "user", "content": line})
         assistant_message = self._send_request()
-        self.last_response = assistant_message 
+        self.last_response = assistant_message
 
-        if is_valid_format(assistant_message):
+        # pretty solid with guardrails for the shorter descriptions... long descriptions getting cut off so may consider
+        # sending the descriptions in two+ parts. need to wrap api call with guardrails also
+        if is_valid(assistant_message):
             return assistant_message, self.messages
         else:
+            print("FAILED: " + assistant_message)
             return self.run_with_retries(line, prompt, max_attempts - 1)
 
     def process_csv_data(self, csv_string, step_one_prompt):
