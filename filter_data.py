@@ -1,4 +1,6 @@
 from argparse import ArgumentParser
+import re
+
 import pandas as pd
 
 # Mapping of textual numbers to numeric
@@ -14,6 +16,48 @@ def replace_textual_numbers(s):
     for text_num, num in number_mapping.items():
         s = s.replace(text_num, str(num))
     return s
+
+
+def extract_numbers(s):
+    """
+    Extracts all numbers from the input string and returns them as a list of floats.
+    This function handles ranges by considering only the endpoints.
+    """
+    numbers = []
+    # Match all patterns resembling numbers or ranges of numbers
+    for match in re.finditer(r'(\d+\.?\d*)\s*-\s*(\d+\.?\d*)|\d+\.?\d*', s):
+        if match.group(1) and match.group(2):  # If it's a range, add both ends
+            numbers.extend([float(match.group(1)), float(match.group(2))])
+        else:  # Otherwise, just add the number
+            numbers.append(float(match.group(0)))
+    return numbers
+
+
+def find_min_max_or_concatenate(df):
+    """
+    Finds the minimum and maximum numbers in each column of the DataFrame, or concatenates all strings
+    if no numbers are found. Returns a DataFrame with the 'trait' and its 'range' or concatenated string as columns.
+    """
+    results = []
+    for col in df.columns:
+        all_numbers = []
+        all_strings = []
+        for value in df[col].dropna():
+            numbers = extract_numbers(str(value))
+            if numbers:
+                all_numbers.extend(numbers)
+            else:
+                all_strings.append(str(value))
+        if all_numbers:  # If there are numbers, find min and max
+            col_min = min(all_numbers)
+            col_max = max(all_numbers)
+            results.append([col, f"{col_min}-{col_max}"])
+        elif all_strings:  # If no numbers but there are strings, concatenate them
+            concatenated = ", ".join(all_strings)  # Change the separator if needed
+            results.append([col, concatenated])
+        else:
+            results.append([col, "N/A"])
+    return pd.DataFrame(results, columns=["trait", "value or range"])
 
 
 def main():
@@ -90,6 +134,26 @@ def main():
     # Overwrite the same filtered CSV file with the replacements
     df_filtered.to_csv(filtered_file_path, index=False)
     print(f"Filtered data with numeric values updated in: {filtered_file_path}")
+
+    df_numeric = pd.read_csv(filtered_file_path)
+
+    # Find the min and max for each column or concatenate strings, and create a summary DataFrame
+    summary_df = find_min_max_or_concatenate(df_numeric)
+
+    # Write the summary to the file, skipping two rows at the beginning
+    with open(filtered_file_path, 'a') as f:
+        f.write('\n\n')
+
+        # Write the header
+        f.write("Trait,Range\n")
+
+        # Write each row of the summary DataFrame, skipping one row after each
+        for index, row in summary_df.iterrows():
+            if row['trait'] != "species":
+                line = f"{row['trait']},{row['value or range']}\n"
+                f.write(line)
+
+    print(f"Summary with ranges or concatenated values added to: {filtered_file_path}")
 
 
 if __name__ == "__main__":
