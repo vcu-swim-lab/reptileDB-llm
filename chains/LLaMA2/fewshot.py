@@ -88,10 +88,10 @@ class TraitsExtractorV4:
                 second_half = species_name + " " + line[nearest_space + 1:]  # Skip the space for the second half
 
                 print(f"Processing first half: '{first_half}'")
-                first_half_result, first_messages = self.run_with_retries(first_half, prompt, max_attempts)
+                first_half_result, first_messages = self.run(first_half, prompt)
 
                 print(f"Processing second half: '{second_half}'")
-                second_half_result, second_messages = self.run_with_retries(second_half, prompt, max_attempts)
+                second_half_result, second_messages = self.run(second_half, prompt)
 
                 # Combine the results
                 combined_result = first_half_result + " " + second_half_result
