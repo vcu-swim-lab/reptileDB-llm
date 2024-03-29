@@ -14,7 +14,7 @@ from chains.GPT.fewshot_gpt import TraitsExtractorGPT
 from prompts.LLaMA2.NER_prompt2 import prompt
 from prompts.LLaMA2.summarize_prompt_llama import step_two
 from translate import is_english, translate_to_english
-
+from reptile_traits import ReptileTraits
 
 def detect_encoding(file_path):
     """Detect the encoding of a given file."""
@@ -72,6 +72,7 @@ def main(file_path, family_name, version):
                     species_name = ' '.join(line.strip().split()[:2])
                     try:
                         if version == 4:
+                            # second parameter is the prompt you want to use
                             result, _ = traits_extractor.run_with_retries(line, prompt)
                         else:
                             result = traits_extractor.get(diagnosis=line)
@@ -83,14 +84,7 @@ def main(file_path, family_name, version):
                     finally:
                         line_number += 1
 
-        df = pd.read_csv(f'as_is_trait_counts_{family_name.lower()}.csv')
-        output = StringIO()
-        df.to_csv(output, index=False)
-        data_string = output.getvalue()
-        synonymous_characteristics = traits_extractor.final_step(data_string, step_two)
-        print(f"CHARACTERISTICS: {data_string}")
-        print(f"SYN CHARACTERISTICS: {synonymous_characteristics}")
-        parse_traits(family_name, synonymous_characteristics)
+                ReptileTraits.to_csv(output_text, family_name)
 
 
 if __name__ == "__main__":
