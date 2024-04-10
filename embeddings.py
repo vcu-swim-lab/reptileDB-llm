@@ -19,7 +19,7 @@ def traitCountList(traitCount, model="text-embedding-3-small"): ##embeddings tur
    df = pd.read_csv(traitCount) ##traitCount is the as_is_trait_counts_~~~~ file
    synonymous_groups = []
    results = []
-   threshold = 0.85
+   threshold = 0.8
    for _, row in df.iterrows(): ##iterates over each row 
       trait = row['trait'] ##extract value from trait column
       embeddings = [ai.Embedding.create(input_text=token)['embedding'] for token in trait] ##creates embeddings for all the traits inside as_is_trait_counts file
