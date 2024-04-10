@@ -1,11 +1,9 @@
 import logging
 from argparse import ArgumentParser
+from io import StringIO
 from os import getenv
 import chardet
-from io import StringIO
-
 import pandas as pd
-from langdetect import detect, LangDetectException
 
 from chains.GPT.species_utils import process_species_data, write_to_csv
 from chains.GPT.zero_shot import TraitsExtractor
@@ -13,11 +11,10 @@ from chains.GPT.zero_shot_v2 import TraitsExtractorV2
 from chains.GPT.zero_shot_v3 import TraitsExtractorV3
 from chains.LLaMA2.fewshot import TraitsExtractorV4, parse_traits
 from chains.GPT.fewshot_gpt import TraitsExtractorGPT
-from reptile_traits import ReptileTraits
 from prompts.LLaMA2.NER_prompt2 import prompt
 from prompts.LLaMA2.summarize_prompt_llama import step_two
-
-
+from translate import is_english, translate_to_english
+from reptile_traits import ReptileTraits
 
 def detect_encoding(file_path):
     """Detect the encoding of a given file."""
@@ -28,14 +25,6 @@ def detect_encoding(file_path):
     except Exception as e:
         logging.error(f"Error detecting file encoding: {e}")
         raise
-
-
-def is_english(line):
-    """Determine if the description is English."""
-    try:
-        return detect(line.strip()) == 'en'
-    except LangDetectException:
-        return False
 
 
 def main(file_path, family_name, version):
@@ -60,48 +49,43 @@ def main(file_path, family_name, version):
         traits_extractor = TraitsExtractorGPT(model_name="gpt-4")
 
     with open(file_path, 'r', encoding=file_encoding) as file:
-        if version in [1, 2, 3]:
-            output_filename = f'extracted_traits_v{version}.csv'
-            species_data, trait_categories = process_species_data(file, traits_extractor, version)
-            df = write_to_csv(species_data, trait_categories, output_filename, version)
-            df.to_csv(output_filename, index=False, encoding='utf-8')
-            print(f"Output saved to {output_filename}")
+        non_english_file_path = f'{family_name}_non-english.txt'
+        with open(non_english_file_path, 'a', encoding='utf-8') as non_english_file:
+            if version in [1, 2, 3]:
+                output_filename = f'extracted_traits_v{version}.csv'
+                species_data, trait_categories = process_species_data(file, traits_extractor, version)
+                df = write_to_csv(species_data, trait_categories, output_filename, version)
+                df.to_csv(output_filename, index=False, encoding='utf-8')
+                print(f"Output saved to {output_filename}")
 
-        elif version in [4, 5]:
-            output_text = []
-            line_number = 1
+            elif version in [4, 5]:
+                output_text = []
+                line_number = 1
 
-            for line in file:
-                if not is_english(line):
-                    print(f"Skipping non-English line #{line_number}")
-                    line_number += 1
-                    continue
+                for line in file:
+                    if not is_english(line):
+                        non_english_file.write(line + '\n')
+                        print(f"Skipping non-English line #{line_number}")
+                        line_number += 1
+                        continue
 
-                species_name = ' '.join(line.strip().split()[:2])
-                try:
-                    if version == 4:
-                        result, _ = traits_extractor.run_with_retries(line, prompt)
-                    else:
-                        result = traits_extractor.get(diagnosis=line)
+                    species_name = ' '.join(line.strip().split()[:2])
+                    try:
+                        if version == 4:
+                            # second parameter is the prompt you want to use
+                            result, _ = traits_extractor.run_with_retries(line, prompt)
+                        else:
+                            result = traits_extractor.get(diagnosis=line)
 
-                    print(f"Line #{line_number}\n{result}")
-                    output_text.append((species_name, result))
-                except Exception as e:
-                    print(f"Error processing line #{line_number}: {e}")
-                finally:
-                    line_number += 1
+                        print(f"Line #{line_number}\n{result}")
+                        output_text.append((species_name, result))
+                    except Exception as e:
+                        print(f"Error processing line #{line_number}: {e}")
+                    finally:
+                        line_number += 1
 
-            ReptileTraits.to_csv(output_text, family_name)
+                ReptileTraits.to_csv(output_text, family_name)
 
-            df = pd.read_csv(f'as_is_trait_counts_{family_name.lower()}.csv')
-            output = StringIO()
-            df.to_csv(output, index=False)
-            data_string = output.getvalue()
-            synonymous_characteristics = traits_extractor.final_step(data_string, step_two)
-            print(f"CHARACTERISTICS: {data_string}")
-            print(f"SYN CHARACTERISTICS: {synonymous_characteristics}")
-            parse_traits(family_name, synonymous_characteristics)
-            
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Process reptile species data.")

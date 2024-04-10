@@ -3,6 +3,7 @@ from io import StringIO
 
 import requests
 import re
+from validator import is_valid
 
 
 def parse_traits(family, syn_char):
@@ -23,22 +24,10 @@ def parse_traits(family, syn_char):
                 writer.writerow([trait, count])
 
 
-def is_valid_format(result):
-    lines = result.strip().split('\n')
-
-    pattern = re.compile(r'^\d+\.\s.*\|\s.*\|\s.*(\|\s.*)?$')
-
-    for line in lines:
-        if not pattern.match(line):
-            return False
-
-    return True
-
-
 class TraitsExtractorV4:
     def __init__(self):
         self.last_response = None
-        self.uri = "http://athena521:25261/v1/chat/completions"
+        self.uri = "http://athena521:47438/v1/chat/completions"
         self.headers = {"Content-Type": "application/json"}
         self.temperature = 0
         self.mode = 'instruct'
@@ -59,7 +48,6 @@ class TraitsExtractorV4:
         self._clear_messages()
         return response.json()['choices'][0]['message']['content']
 
-
     def run(self, line, prompt):
         self._clear_messages()
         self.messages.append({"role": "system", "content": prompt})
@@ -67,21 +55,53 @@ class TraitsExtractorV4:
         assistant_message = self._send_request()
         return assistant_message, self.messages
 
-    def run_with_retries(self, line, prompt, max_attempts=3):
-        if max_attempts <= 0:
-            # returns the last response even if it's in the wrong format
-            return self.last_response, self.messages
+    def run_with_retries(self, line, prompt, max_attempts=1):
+        species_name = ' '.join(line.split()[:2])
 
-        self._clear_messages()
-        self.messages.append({"role": "system", "content": prompt})
-        self.messages.append({"role": "user", "content": line})
-        assistant_message = self._send_request()
-        self.last_response = assistant_message 
+        attempts = 0
+        while attempts < max_attempts:
+            self._clear_messages()
+            self.messages.append({"role": "system", "content": prompt})
+            self.messages.append({"role": "user", "content": line})
+            assistant_message = self._send_request()
+            self.last_response = assistant_message
 
-        if is_valid_format(assistant_message):
-            return assistant_message, self.messages
-        else:
-            return self.run_with_retries(line, prompt, max_attempts - 1)
+            if is_valid(assistant_message):
+                return assistant_message, self.messages
+            else:
+                print(f"Validation failed for '{species_name}', attempt: {attempts + 1} of {max_attempts}")
+                attempts += 1
+
+        if attempts >= max_attempts:
+            if len(line) > 1:
+                print(f"Max attempts reached for '{species_name}'. Splitting input for further processing.")
+                # Find the nearest space to the midpoint to split on a whole word
+                middle_index = len(line) // 2
+                nearest_space = line.rfind(' ', 0, middle_index)
+                if nearest_space == -1 or nearest_space + 1 == len(line):  # No space found, or space is at the end
+                    nearest_space = line.find(' ', middle_index)
+                    if nearest_space == -1:
+                        # If there's no space to split on, use the original middle index
+                        nearest_space = middle_index
+
+                first_half = species_name + " " + line[:nearest_space]
+                second_half = species_name + " " + line[nearest_space + 1:]  # Skip the space for the second half
+
+                print(f"Processing first half: '{first_half}'")
+                first_half_result, first_messages = self.run(first_half, prompt)
+
+                print(f"Processing second half: '{second_half}'")
+                second_half_result, second_messages = self.run(second_half, prompt)
+
+                # Combine the results
+                combined_result = first_half_result + " " + second_half_result
+                combined_messages = first_messages + second_messages  # Adjust as needed
+                return combined_result, combined_messages
+            else:
+                print(f"Unable to split '{species_name}' further. Returning last response.")
+                return self.last_response, self.messages
+        # Fallback return, in case the loop exits in an unexpected manner
+        return self.last_response, self.messages
 
     def process_csv_data(self, csv_string, step_one_prompt):
         self._clear_messages()
