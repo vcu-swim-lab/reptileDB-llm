@@ -76,72 +76,122 @@ def main():
     parser.add_argument("family", type=str, help="Reptile family to filter")
     args = parser.parse_args()
 
-    family = args.family
-    family = family.lower()
+    family = args.family.lower()
     file_path = f'.\\data\\LLaMA2 Results\\{family.title()}\\traits_{family}.csv'
+    df = pd.read_csv(file_path)
 
-    # Family-specific traits that Peter specifically wants
     traits = {
         "viperidae": [
             ["species"],
             ["ventral scales", "ventral scale counts", "ventral", "ventrals", "ventral scale", "VS", "VSC", "VEN", "V"],
             ["subcaudal scales", "subcaudal scale", "subcaudal[s]", "subcaudal", "subcaudals", "sub-caudal",
-             "sub-caudals", "caudal", "caudals", "urostege", "urosteges", "SC", "C"],
+             "sub-caudals", "caudal", "caudals", "urostege", "urosteges", "SC", "C", "subcaudal scale count", "subcaudals (females)",
+             "subcaudals (paratype)"],
             ["dorsal scale rows", "dorsal scale row", "dorsals", "dorsal", "DSR", "dorsal scale formula",
              "dorsal scale rows behind head", "dorsal scale rows behind midbody", "dorsal scale rows before tail",
              "anterior dorsal scale rows", "posterior dorsal scale rows", "anterior/posterior dorsal scale rows",
-             "middorsal scale count"],
-            ["scale", "scale type", "scales"],
-            ["size", "total length", "length", "TL", "measurements"],
+             "middorsal scale count", "anterior dorsal scale rows (dsr)", "dsr", "anterior dorsals", "anterior scale rows",
+             "posterior scale rows", "anterior scales", "dorsal body scales", "dorsal rows of scales", "dorsal scale row",
+             "anterior scale row", "dorsal rows", "dorsal scale rows (females)", "dorsal scale rows (males)",
+             "middorsal scale rows (msr)", "msr", "middorsal scales", "mid-body dorsal rows", "mid-dorsal scale rows",
+             "mid-dorsal scales", "midbody dorsal scale rows", "midbody dorsal scales", "midbody scale rows",
+             "posterior scale rows (psr)", "psr", "posterior dorsal scales"],
+            ["scale", "scale type", "scales", "scale types"],
+            ["size", "total length", "length", "TL", "measurements", "adult body size", "adult size", "body size", "maximum size"],
             ["SVL", "snout-vent length", "snout-vent-length", "snout vent length"],
-            ["tail", "tails", "tail length", "TL", "TAL"],
-            ["anal plate", "anal plates"],
-            ["supralabial", "supralabials", "SL"],
-            ["infralabial", "infralabials", "lower labial", "lower labials", "sublabial", "sublabials"]
+            ["tail", "tails", "tail length", "TAL", "tail length females", "tail length males", "talgtl", "tail length (tl)"],
+            ["anal plate", "anal plates", "anal", "anal scute"],
+            ["supralabial", "supralabials", "SL", "supralabial number", "supralabial row", "supralabial scales"],
+            ["infralabial", "infralabials", "lower labial", "lower labials", "sublabial", "sublabials", "infralabial scales"]
+        ],
+        "snakes": [
+            ["species"],
+            ["ventral scales", "ventral scale counts", "ventral", "ventrals", "ventral scale", "VS", "VSC", "VEN", "V"],
+            ["subcaudal scales", "subcaudal scale", "subcaudal[s]", "subcaudal", "subcaudals", "sub-caudal",
+             "sub-caudals", "caudal", "caudals", "urostege", "urosteges", "SC", "C", "subcaudal scale count",
+             "subcaudals (females)",
+             "subcaudals (paratype)"],
+            ["dorsal scale rows", "dorsal scale row", "dorsals", "dorsal", "DSR", "dorsal scale formula",
+             "dorsal scale rows behind head", "dorsal scale rows behind midbody", "dorsal scale rows before tail",
+             "anterior dorsal scale rows", "posterior dorsal scale rows", "anterior/posterior dorsal scale rows",
+             "middorsal scale count", "anterior dorsal scale rows (dsr)", "dsr", "anterior dorsals",
+             "anterior scale rows",
+             "posterior scale rows", "anterior scales", "dorsal body scales", "dorsal rows of scales",
+             "dorsal scale row",
+             "anterior scale row", "dorsal rows", "dorsal scale rows (females)", "dorsal scale rows (males)",
+             "middorsal scale rows (msr)", "msr", "middorsal scales", "mid-body dorsal rows", "mid-dorsal scale rows",
+             "mid-dorsal scales", "midbody dorsal scale rows", "midbody dorsal scales", "midbody scale rows",
+             "posterior scale rows (psr)", "psr", "posterior dorsal scales"],
+            ["scale", "scale type", "scales", "scale types"],
+            ["size", "total length", "length", "TL", "measurements", "adult body size", "adult size", "body size",
+             "maximum size"],
+            ["SVL", "snout-vent length", "snout-vent-length", "snout vent length"],
+            ["tail", "tails", "tail length", "TAL", "tail length females", "tail length males", "talgtl",
+             "tail length (tl)"],
+            ["anal plate", "anal plates", "anal", "anal scute"],
+            ["supralabial", "supralabials", "SL", "supralabial number", "supralabial row", "supralabial scales"],
+            ["infralabial", "infralabials", "lower labial", "lower labials", "sublabial", "sublabials",
+             "infralabial scales"]
         ],
         "amphisbaenidae": [
             ["species"],
-            ["anal shields", "anal shield", "precloacal shields"],
-            ["autotomy", "caudal autotomy", "autotomy constriction", "autotomy level", "autotomy site"],
-            ["caudal annuli", "tail annuli"],
+            ["body annuli", "annuli on tail", "annuli on body", "annuli on the body", "annulus"],
+            ["lateral sulci", "lateral", "lateral sulcus", "lateral surface"],
+            ["anal shields", "anal shield", "precloacal shields", "anal flap", "anal segments", "anals"],
+            ["nasal", "nasals", "a nasal", "nasal suture", "internasal suture", "internasal sutures"],
+            ["eye", "eyes", "eye-shield", "ocular"],
+            ["autotomy", "caudal autotomy", "autotomy constriction", "autotomy level", "autotomy site", "autotomy sites on caudal annuli"],
+            ["caudal annuli", "tail annuli", "annuli", "number of caudal annuli", "annulus"],
             ["color", "color on the dorsal surface", "color pattern", "dorsal color", "dorsal pigmentation",
-             "dorsum color"],
+             "dorsum color", "color (dorsal)", "coloration", "pigmentation", "color on body", "color on tail", "color on head",
+             "dorsal pigmentation", "ventral pigmentation", "background coloration", "overall coloration",
+             "color patterns", "coloration pattern", "color changing", "color fade", "color fading", "body color",
+             "color (tip of tail and snout)", "color (ventral)", "colors"],
             ["dorsal sulci", "dorsal sulcus"],
-            ["frontal shield", "frontal", "frontal shape"],
-            ["infralabials", "lower labial"],
-            ["preanal pores", "precloacal pores", "preclocals pores"],
+            ["rostral", "rostral plate", "roastral", "rostral region", "rostral shield", "rostral tip", "rostrale"],
+            ["ventral sulci", "ventral sulcus"],
+            ["frontal shield", "frontal", "frontal shape", "a pair of frontals", "frontal shields", "frontals"],
+            ["infralabials", "lower labial", "infralabial", "infralabial scales", "infralabial shields", "lower labials"],
+            ["precloacal pores", "preanal pores", "precloacal pore", "preclocals pores", "precloacal", "pre-cloacal pores"],
             ["divisions of the annuli", "dorsal and ventral segments", "segments per midbody annulus",
              "dorsal plus ventral segments", "scales around midbody", "segments around midbody",
-             "segments to a midbody annulus"],
-            ["supralabial shield", "upper labial"]
+             "segments to a midbody annulus", "body segments", "dorsal midbody segments", "ventral midbody segments",
+             "midbody segments", "segments in a midbody annulus", "dorsal segments", "dorsal segments/midbody annulus",
+             "dorsal segments/midbody half-annulus", "dorsal segments to a midbody annulus", "dorsal segments in a midbody annulus",
+             "ventral segments", "ventral segments in a midbody annulus", "ventral segments on a midbody annulus", "ventral segments per midbody annulus",
+             "ventral segments/midbody annulus", "ventral segments/midbody half-annulus", "number of midbody ventral segments",
+             "number of dorsal midbody segments", "total segments"],
+            ["parietals", "parietal", "a pair of parietals", "parietal region"],
+            ["postmalar shields", "postmalar shield", "postmalar", "postmalars", "row of postmalar shields"],
+            ["SVL", "snout to vent length", "snout-vent length", "size", "svl/diameter ratio", "body length", "body size", "total length", "length", "TL", "measurements", "adult body size", "adult size", "body size", "maximum size", "adult svl", "maximal svl"],
+            ["supralabial shield", "upper labial", "upper labials", "upper labial shields", "supralabials", "supralabial"],
+            ["snout", "snout shape"],
+            ["tail", "tails", "tail shape", "tail tip", "tail length"],
+            ["chin shields", "chin", "chin area"],
+            ["temporal shields", "temporals", "temporal"],
+            ["head shields", "head shape", "head shield"],
+            ["head length"],
+            ["head width", "head diameter"],
+            ["prefrontals", "prefrontal", "prefrontals bone", "prefrontal shields"],
+            ["occipitals", "occipital", "occipital region"]
         ]
     }
 
-    df = pd.read_csv(file_path)
     specified_traits = traits.get(family, [])
     if not specified_traits:
         print(f"No specified traits found for {family}.")
         return
 
     df = combine_synonymous_columns(df, specified_traits)
+    primary_columns = [group[0] for group in specified_traits]
+    filtered_df = df[primary_columns].dropna(thresh=5)
 
-    # Flatten the list of specified traits for filtering
-    flattened_traits = [item for sublist in specified_traits for item in sublist]
-    primary_columns = [group[0] for group in specified_traits]  # Extract primary column names
-
-    # Update the filtering logic using primary column names
-    filtered_columns = [col for col in df.columns if col in primary_columns]
-    filtered_df = df[filtered_columns]
-
-    # Save the filtered dataframe
     filtered_file_path = f'.\\data\\LLaMA2 Results\\{family.title()}\\filtered_traits_{family}.csv'
     filtered_df.to_csv(filtered_file_path, index=False)
     print(f"Filtered data with species saved to: {filtered_file_path}")
 
     # Load the filtered DataFrame to replace the textual numbers --> numerical
     df_filtered = pd.read_csv(filtered_file_path)
-
-    # Replace textual numbers with actual numeric value
     for col in df_filtered.columns:
         df_filtered[col] = df_filtered[col].apply(
             lambda x: replace_textual_numbers(str(x)) if isinstance(x, str) else x)
@@ -161,11 +211,6 @@ def main():
     summary_df.to_csv(summary_file_path, index=False)
     print(f"Summary with ranges or concatenated values saved to: {summary_file_path}")
 
-    # Optionally, if you want to append the summary directly to the filtered file
-    # Comment out the above two lines and use this block instead
-    # with open(filtered_file_path, 'a') as f:
-    #     f.write('\n\n')
-    #     summary_df.to_csv(f, index=False, header=True)
 
 if __name__ == "__main__":
     main()
