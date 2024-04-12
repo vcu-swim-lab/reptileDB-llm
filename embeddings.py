@@ -32,6 +32,7 @@ def combine_terms(trait_list, threshold=0.8):
          combined_embedding = [(x + y) / 2 for x, y in zip(embed1, embed2)]  # Create a new embedding
          response = client.embeddings.create(input=combined_embedding, model="text-embedding-3-large")
          new_term = response.data[0].embedding
+         ##generate into text???
          # Check if the new term is not already associated with a term in new_terms
          if not any(new_term in term for term in new_terms):
             new_terms.append(new_term)
