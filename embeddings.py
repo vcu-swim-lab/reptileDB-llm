@@ -1,10 +1,10 @@
-from openai import OpenAI as ai
+from openai import OpenAI
 import pandas as pd
 from itertools import combinations
 from sklearn.metrics.pairwise import cosine_similarity
 import sys
 
-ai.api_key = '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'
+client = OpenAI(api_key="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")
 
 def tokenTraits(as_is_trait_count_file):
    trait_list = []
@@ -15,25 +15,28 @@ def tokenTraits(as_is_trait_count_file):
    return trait_list
          
       
-def combine_terms(trait_list, threshold = 0.8):
+def combine_terms(trait_list, threshold=0.8):
    new_terms = []
    for term1, term2 in combinations(trait_list, 2):
-      ##create embeddings
-      embed1 = ai.Embedding.create(input_text=term1)['embedding']
-      embed2 = ai.Embedding.create(input_text=term2)['embedding']
+      # Create embeddings
+      response1 = client.embeddings.create(input=term1, model="text-embedding-3-large")
+      response2 = client.embeddings.create(input=term2, model="text-embedding-3-large")
+      embed1 = response1.data[0].embedding
+      embed2 = response2.data[0].embedding
 
-      ##calculate similarities
+      # Calculate similarities
       similarity = cosine_similarity([embed1], [embed2])[0][0]
-
-      ##check for threshold
+        
+      # Check for threshold
       if similarity > threshold:
-         combined_embedding = (term1 + term2)/2 ##creates a new embedding
-         new_term = ai.Embedding.retrieve(closest_embedding=combined_embedding)['object']
-
-         ##checks whether the new term created isn't already associated with a term already inside new_terms
+         combined_embedding = [(x + y) / 2 for x, y in zip(embed1, embed2)]  # Create a new embedding
+         response = client.embeddings.create(input=combined_embedding, model="text-embedding-3-large")
+         new_term = response.data[0].embedding
+         # Check if the new term is not already associated with a term in new_terms
          if not any(new_term in term for term in new_terms):
             new_terms.append(new_term)
    return new_terms
+
 
 def main(as_is_trait_count_file):
    # Get trait list from the CSV file
